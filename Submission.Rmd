@@ -26,6 +26,7 @@ library(vegan)
 library(ggforce)
 library(ggsignif)
 library(rstatix)
+library(Maaslin2)
 ```
 
 # Introduction
@@ -824,22 +825,28 @@ humann_split_stratified_table \
 
 ## 3.4 Results: Community-wide functional profiling
 
+Data was first loaded ...
+
+An inital PCA showes:
+
+Then MaSaalin2 was used to ....
+
 ```{r humann3-load}
 # Load .tsvs from 3.3!
 
 KD_MERGED <- "kneaddata/functional_profiling/humann3_merged"
 
-# Unstratified pathway abundance (CPM) — 390 pathways x 84 samples
+# Unstratified pathway abundance (CPM) - 390 pathways x 84 samples
 path_abund <- read.delim(file.path(KD_MERGED, "all_pathabundance_unstratified.tsv"),check.names = FALSE) %>%
   rename_with(~"pathway", 1) %>%
   filter(!pathway %in% c("UNMAPPED", "UNINTEGRATED"))
 
-# Pathway coverage (0-1) — same dimensions, used to filter low-confidence pathways
+# Pathway coverage (0-1) - same dimensions, used to filter low-confidence pathways
 path_cov <- read.delim(file.path(KD_MERGED, "all_pathcoverage.tsv"),check.names = FALSE) %>%
   rename_with(~"pathway", 1) %>%
   filter(!pathway %in% c("UNMAPPED", "UNINTEGRATED"))
 
-# Stratified pathway abundance — pathway|species rows
+# Stratified pathway abundance - pathway|species rows
 path_strat <- read.delim(file.path(KD_MERGED, "all_pathabundance_stratified.tsv"),check.names = FALSE) %>%
   rename_with(~"pathway_species", 1) %>%
   filter(!grepl("^UNMAPPED|^UNINTEGRATED", pathway_species))
@@ -857,8 +864,7 @@ path_strat <- clean_humann_cols(path_strat)
 
 # Sample columns present in both HUMANn3 output and metadata
 h3_samples <- intersect(colnames(path_abund)[-1], meta$sample)
-meta_h3    <- meta %>% filter(sample %in% h3_samples) %>%
-  mutate(type = factor(type, levels = type_levels))
+meta_h3    <- meta %>% filter(sample %in% h3_samples) %>% mutate(type = factor(type, levels = type_levels))
 
 # Coverage-filtered pathway matrix: keep pathways with mean coverage >= 0.1
 cov_mat  <- path_cov  %>% column_to_rownames("pathway") %>% select(all_of(h3_samples))
@@ -874,7 +880,7 @@ path_long <- path_mat_filt %>%
   left_join(meta_h3, by = "sample")
 ```
 
-```{r humann3-pcoa, fig.width=5, fig.height=3}
+```{r humann3-pcoa, fig.width=4, fig.height=3}
 path_mat_num <- path_mat_filt %>% as.matrix()
 
 mode(path_mat_num) <- "numeric"
@@ -898,7 +904,9 @@ data.frame(sample = rownames(pcoa$points),PC1 = pcoa$points[,1],PC2 = pcoa$point
 
 Principal coordinates analysis of CPM-normalized pathway abundances across CRC, paired normal, and healthy biopsy samples. Samples form a continuous arc-like gradient rather than distinct disease-specific clusters. This probably suggests that the dominant axis of functional variation reflects differences in microbial biomass and pathway detection sensitivity across low-biomass tissue samples rather than discrete CRC-associated functional states.
 
-```{r humann3-diff-pathways, fig.width=12, fig.height=10, results='asis'}
+```{r humann3-diff-pathways, include = FALSE}
+
+# fig.width=7, fig.height=8, results='asis',
 # Kruskal-Wallis across groups per pathway, BH correction
 # kw_res <- path_long %>%
 #   group_by(pathway) %>%
@@ -924,7 +932,7 @@ kw_res %>%
   dplyr::rename(Pathway = pathway, `p (KW)` = p, `p adj (BH)` = p_adj) %>%
   knitr::kable(caption = "Top 10 pathways by Kruskal-Wallis test across sample groups (BH-adjusted).")
 
-top_paths <- kw_res %>% slice_head(n = 10) %>% pull(pathway)
+top_paths <- kw_res %>% slice_head(n = 9) %>% pull(pathway)
 
 path_long %>%
   filter(pathway %in% top_paths) %>%
@@ -937,14 +945,178 @@ path_long %>%
   facet_wrap(~label, scales = "free_y", ncol = 3) +
   scale_colour_manual(values = c("CRC" = "#E41A1C", "Healthy" = "#4DAF4A", "Paired" = "#377EB8")) +
   labs(x = NULL, y = "Pathway abundance (CPM)",
-       title = "Figure -- Top 15 pathways by Kruskal-Wallis (BH-adjusted)") +
+       title = "Top 9 pathways by Kruskal-Wallis (BH-adjusted)") +
   theme_classic() +
   theme(legend.position = "none", strip.text = element_text(size = 7),
         axis.text.x = element_text(size = 8))
 ```
-- No statistically significantly different pathways. however, good to visualize still 
 
-```{r humann3-species-contrib, fig.width=12, fig.height=8}
+### Differential pathway abundance analysis with MaAsLin2
+
+To better suit the paired design, differential pathway abundance was modeled using [MaAsLin2](https://huttenhower.sph.harvard.edu/maaslin2/), which fits a separate multivariable linear model for each HUMANn3 pathway feature. This serves as a differential abundance analysis analogous to differential expression testing, but applied to CPM-normalized microbial pathway abundances rather than raw RNA-seq gene counts. This framework is meant to explicitly account for the matched sampling structure by including patient ID as a random effect, allowing detection of pathway shifts that are consistently associated with CRC within paired tumor–adjacent normal biopsies. Three biologically relevant contrasts were evaluated separately: CRC vs paired normal (primary within-patient comparison), CRC vs healthy, and CRC vs all non-CRC samples combined. Results are shown for CRC vs paired data was analyzed below.
+
+```{r run-maaslin, include = FALSE}
+# Harmonize sample naming everywhere
+clean_sample_ids <- function(x) {x %>% str_replace("^Lasse(\\d+)$", "La\\1")}
+
+# Convert for MaAsLin, samples as rows, pathways as columns
+feat <- path_mat_filt %>% as.data.frame() %>% t() %>% as.data.frame()
+meta_maaslin <- meta_h3 %>% select(sample, type, patient_ID) %>% column_to_rownames("sample")
+feat <- feat[rownames(meta_maaslin), ]
+
+rownames(feat) <- clean_sample_ids(rownames(feat))
+
+# Metadata for MaAsLin
+meta_maaslin <- meta_h3 %>%
+  mutate(sample = clean_sample_ids(sample)) %>%
+  select(sample, type, patient_ID) %>%
+  distinct() %>% column_to_rownames("sample")
+
+# Keep only overlapping samples in the same order
+common_samples <- intersect(rownames(feat), rownames(meta_maaslin))
+feat <- feat[common_samples, , drop = FALSE]
+meta_maaslin <- meta_maaslin[common_samples, , drop = FALSE]
+
+# 1) CRC vs Paired (primary)
+meta_cp <- meta_maaslin %>%
+  rownames_to_column("sample") %>%
+  filter(type %in% c("CRC", "Paired")) %>%
+  mutate(type = factor(type, levels = c("Paired", "CRC"))) %>%
+  column_to_rownames("sample")
+
+feat_cp <- feat[rownames(meta_cp), , drop = FALSE]
+
+# UNCOMMENT TO RUN!
+# fit_crc_vs_paired <- Maaslin2(
+#   input_data      = feat_cp,
+#   input_metadata  = meta_cp,
+#   output          = "maaslin_crc_vs_paired",
+#   fixed_effects   = "type",
+#   random_effects  = "patient_ID",
+#   normalization   = "NONE",
+#   transform       = "LOG",
+#   analysis_method = "LM")
+
+# 2) CRC vs Healthy
+meta_ch <- meta_maaslin %>%
+  rownames_to_column("sample") %>%
+  filter(type %in% c("CRC", "Healthy")) %>%
+  mutate(type = factor(type, levels = c("Healthy", "CRC"))) %>%
+  column_to_rownames("sample")
+
+feat_ch <- feat[rownames(meta_ch), , drop = FALSE]
+
+# UNCOMMENT TO RUN!
+# fit_crc_vs_healthy <- Maaslin2(
+#   input_data      = feat_ch,
+#   input_metadata  = meta_ch,
+#   output          = "maaslin_crc_vs_healthy",
+#   fixed_effects   = "type",
+#   normalization   = "NONE",
+#   transform       = "LOG",
+#   analysis_method = "LM")
+
+# 3) CRC vs all non-CRC
+meta_comb <- meta_maaslin %>%
+  rownames_to_column("sample") %>%
+  mutate(group = ifelse(type == "CRC", "CRC", "NonCRC"),
+         group = factor(group, levels = c("NonCRC", "CRC"))) %>%
+  column_to_rownames("sample")
+
+feat_comb <- feat[rownames(meta_comb), , drop = FALSE]
+
+# UNCOMMENT TO RUN!
+# fit_crc_vs_noncrc <- Maaslin2(
+#   input_data      = feat_comb,
+#   input_metadata  = meta_comb,
+#   output          = "maaslin_crc_vs_noncrc",
+#   fixed_effects   = "group",
+#   normalization   = "NONE",
+#   transform       = "LOG",
+#   analysis_method = "LM")
+```
+
+```{r massalin-res, echo = FALSE, warning=FALSE, message=FALSE}
+res_cp   <- read.delim("maaslin_crc_vs_paired/all_results.tsv")
+res_ch   <- read.delim("maaslin_crc_vs_healthy/all_results.tsv")
+res_comb <- read.delim("maaslin_crc_vs_noncrc/all_results.tsv")
+
+top_cp <- res_cp %>%
+  arrange(qval) %>%
+  mutate(model = "CRC vs Paired") %>%
+  select(model, feature, value, pval, qval)
+
+top_ch <- res_ch %>%
+  arrange(qval) %>%
+  mutate(model = "CRC vs Healthy") %>%
+  select(model, feature, value, pval, qval)
+
+top_comb <- res_comb %>%
+  arrange(qval) %>%
+  mutate(model = "CRC vs NonCRC") %>%
+  select(model, feature, value, pval, qval)
+
+# Focusing on cp, as it controls for patient effects
+top_de <- res_cp %>%
+  arrange(qval) %>%
+  slice_head(n = 10)
+
+top_de %>% transmute(Pathway = feature %>%
+      str_replace_all("\\.", " ") %>%
+      str_trunc(67), Coefficient = round(coef, 3), `p-value` = signif(pval, 3), `q-value` = signif(qval, 3)) %>%
+  knitr::kable(caption = "Top 10 CRC-associated pathways from paired MaAsLin2 differential pathway abundance analysis.", booktabs = TRUE)
+```
+
+This paired MaAsLin2 analysis reveals CRC-associated functional pathway shifts that were not as clear in the earlier global community-level comparisons (excluded from report due to page limit, but in .rmd). By modeling patient ID as a random effect, the analysis accounts for baseline differences between individuals and instead focuses on consistent within-patient changes between CRC and paired adjacent normal biopsies. 
+
+In the table of the 10 differentially abundant pathways, the coefficient represents the direction and magnitude of pathway enrichment in CRC relative to the paired normal sample, with positive values indicating higher pathway abundance in CRC tissue. The p-value reflects the raw significance of each pathway-level association, while the q-value is the false discovery rate (FDR) adjusted p-value that corrects for testing many pathways simultaneously. Here, the top pathways all showed positive coefficients (~1.13–1.61) with raw p-values < 0.05 and q-values around 0.1.
+
+Next, the top 9 CRC-associated pathways from MaAsLin2 were visualized as paired slope plots to directly show the within-patient trajectory of pathway abundance from paired normal to CRC tissue. Figure 9 below shows that the majority of patient pairs trend upward from paired normal to CRC across all top-ranked pathways, suggesting that these pathways are enriched within tumor-associated microbial samples. While some pathways are driven by a subset of stronger responders, the consistent upward direction across multiple patients strengthens the biological interpretation of CRC-associated pathway activation. Notably, pathways involved in amino acid biosynthesis and degradation, cobalamin salvage, GDP-mannose biosynthesis, glycogen metabolism, and rhamnose biosynthesis emerged among the strongest paired CRC-associated signals, suggesting coordinated metabolic remodeling in the CRC-associated microbial community.
+
+```{r maas-slopeplot, echo=FALSE, fig.width=7, fig.height=6, warning=FALSE, message=FALSE}
+# Original pathway names used to build feat
+orig_features <- colnames(feat)
+
+# Recreate MaAsLin-safe names as closely as possible
+safe_features <- make.names(orig_features, unique = TRUE)
+
+feature_map <- tibble(pathway_original = orig_features,
+  pathway_maaslin  = safe_features)
+
+# Look up the top 6 MaAsLin pathways
+top9 <- res_cp %>%
+  arrange(qval) %>%
+  slice_head(n = 9) %>%
+  pull(feature) %>%
+  as.character()
+
+top9_lookup <- feature_map %>%
+  filter(pathway_maaslin %in% top9)
+
+# Use the original HUMANn3 names to pull from path_long
+plot_df <- path_long %>%
+  filter(pathway %in% top9_lookup$pathway_original,
+    type %in% c("CRC", "Paired")) %>%
+  mutate(label = str_remove(pathway, "^[^:]+: ") %>% str_trunc(35),
+    type = factor(type, levels = c("Paired", "CRC")))
+
+plot_df %>%
+  ggplot(aes(x = type, y = cpm, group = patient_ID)) +
+  geom_line(alpha = 0.4) +
+  geom_point(size = 1.5) +
+  facet_wrap(~label, scales = "free_y", ncol = 3) +
+  labs(x = NULL, y = "Pathway abundance (CPM)" ) +
+  theme_classic() + 
+  theme(strip.text = element_text(size = 6),
+    axis.text = element_text(size = 6), )
+```
+
+**Figure 9.** Paired slope plot of the top 9 CRC-associated pathways from MaAsLin2
+
+```{r humann3-species-contrib, include = FALSE}
+
+# fig.width=12, fig.height=8, 
+
 # Parse stratified rows (PATHWAY|g__Genus.s__species")
 strat_long <- path_strat %>%
   filter(grepl("\\|", pathway_species)) %>%
@@ -967,9 +1139,9 @@ strat_long %>%
   theme_classic() +
   theme(strip.text = element_text(size = 7), axis.text.x = element_text(size = 8),
         legend.text = element_text(size = 8))
-```
 
-Stratified HUMAnN pathway analysis shows that several CRC-enriched pathways were driven by a limited subset of bacterial taxa rather than broad community-wide contributions. Multiple pathways, including GDP-mannose biosynthesis, homolactic fermentation, and L-citrulline biosynthesis, shows visibly higher mean abundance in CRC biopsies, with dominant contributions from a small number of taxa, including several oral-associated anaerobes previously implicated in colorectal cancer. In contrast, healthy and paired samples generally exhibited lower pathway abundance and more evenly distributed species contributions.
+# Stratified HUMAnN pathway analysis shows that several CRC-enriched pathways were driven by a limited subset of bacterial taxa rather than broad community-wide contributions. Multiple pathways, including GDP-mannose biosynthesis, homolactic fermentation, and L-citrulline biosynthesis, shows visibly higher mean abundance in CRC biopsies, with dominant contributions from a small number of taxa, including several oral-associated anaerobes previously implicated in colorectal cancer. In contrast, healthy and paired samples generally exhibited lower pathway abundance and more evenly distributed species contributions.
+```
 
 # Conclusion
 
@@ -977,9 +1149,7 @@ Stratified HUMAnN pathway analysis shows that several CRC-enriched pathways were
 - First, reproducing the published microbial analyses on the raw unmapped reads successfully recapitulated the key reported findings, including low but structured alignment to B. fragilis and F. nucleatum, enrichment of Fusobacterium and F. nucleatum in CRC samples, and increased expression of the virulence-associated genes fomA and radD in high-F. nucleatum libraries.
 - The first part of this analysis shows that applying an additional round of KneadData preprocessing does not substantially alter these major community composition patterns, instead reducing low-depth outliers and tightening the same CRC-associated abundance trends. 
 - Comparing the two Figure 4 recreations, the overall bacterial scaled counts became more consistent across sample groups after KneadData preprocessing, which is likely driven by removal of the lowest-depth outlier libraries. In contrast, the within-sample alpha diversity differences between groups became slightly more pronounced, although the CRC versus paired comparison remained non-significant. This is biologically reasonable, as matched CRC and paired normal samples originate from the same patient and are therefore expected to be more similar to one another than to unrelated healthy controls, where inter-patient variability contributes more strongly. Importantly, the key disease-associated trends were preserved after preprocessing: Fusobacterium counts remained enriched in CRC samples, and the same overall pattern was observed for relative abundance of both F. nucleatum and B. fragilis.
-
-
-These results establish that the reproduced baseline is robust and provide confidence for extending the analysis into community-wide functional profiling with HUMAnN3.
+- By processing these reads through Kraken2/Bracken, bioBakery's 
 
 # References
 
@@ -1002,6 +1172,7 @@ https://pubmed.ncbi.nlm.nih.gov/31779668/
 14. Langemead and Salzberg. (2013). Fast gapped-read alignment with Bowtie 2. *Nat Methods*. https://pmc.ncbi.nlm.nih.gov/articles/PMC3322381/
 15. Westreich et al. (2018). SAMSA2: a standalone metatranscriptome analysis pipeline. *BMC Bioinformatics*. https://pmc.ncbi.nlm.nih.gov/articles/PMC5963165/
 16. Buchfink et al. (2015). Fast and sensitive protein alignment using DIAMOND. *Nat Methods*. https://www.nature.com/articles/nmeth.3176
+17. Mallick et al. (2021). Multivariable association discovery in population-scale meta-omics studies. *PLOS Comp Bio*. https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442
 
 AI acknowledgement:  
 Anthropic. (2024). Claude 3.5 Sonnet [Large language model]. Retrieved from https://claude.ai.    

@@ -1,0 +1,95 @@
+2026-04-13 05:08:48.549708 INFO::Writing function arguments to log file
+2026-04-13 05:08:48.553127 DEBUG::Function arguments
+2026-04-13 05:08:48.555842 DEBUG::Output folder: maaslin_crc_vs_paired
+2026-04-13 05:08:48.55598 DEBUG::Min Abundance: 0.000000
+2026-04-13 05:08:48.556112 DEBUG::Min Prevalence: 0.100000
+2026-04-13 05:08:48.556225 DEBUG::Normalization: NONE
+2026-04-13 05:08:48.556339 DEBUG::Transform: LOG
+2026-04-13 05:08:48.556445 DEBUG::Analysis method: LM
+2026-04-13 05:08:48.556555 DEBUG::Max significance: 0.250000
+2026-04-13 05:08:48.556662 DEBUG::Random effects: patient_ID
+2026-04-13 05:08:48.556772 DEBUG::Fixed effects: type
+2026-04-13 05:08:48.556885 DEBUG::Correction method: BH
+2026-04-13 05:08:48.55699 DEBUG::Standardize: TRUE
+2026-04-13 05:08:48.557095 DEBUG::Cores: 1
+2026-04-13 05:08:48.557196 INFO::Verifying options selected are valid
+2026-04-13 05:08:48.572418 INFO::Determining format of input files
+2026-04-13 05:08:48.572724 INFO::Input format is data samples as rows and metadata samples as rows
+2026-04-13 05:08:48.573331 DEBUG::A total of 56 samples were found in both the data and metadata
+2026-04-13 05:08:48.573453 DEBUG::Reordering data/metadata to use same sample ordering
+2026-04-13 05:08:48.574354 INFO::Formula for random effects: expr ~ (1 | patient_ID)
+2026-04-13 05:08:48.574703 INFO::Formula for fixed effects: expr ~  type
+2026-04-13 05:08:48.57494 INFO::Factor detected for categorial metadata 'type'. Provide a reference argument or manually set factor ordering to change reference level.
+2026-04-13 05:08:48.57513 INFO::Filter data based on min abundance and min prevalence
+2026-04-13 05:08:48.575316 INFO::Total samples in data: 56
+2026-04-13 05:08:48.575498 INFO::Min samples required with min abundance for a feature not to be filtered: 5.600000
+2026-04-13 05:08:48.576792 INFO::Total filtered features: 229
+2026-04-13 05:08:48.577075 INFO::Filtered feature names from abundance and prevalence filtering: DENOVOPURINE2.PWY..superpathway.of.purine.nucleotides.de.novo.biosynthesis.II, ECASYN.PWY..enterobacterial.common.antigen.biosynthesis, GLYCOLYSIS.TCA.GLYOX.BYPASS..superpathway.of.glycolysis..pyruvate.dehydrogenase..TCA..and.glyoxylate.bypass, P23.PWY..reductive.TCA.cycle.I, PWY.5209..methyl.coenzyme.M.oxidation.to.CO2, PWY.5677..succinate.fermentation.to.butanoate, PWY.7391..isoprene.biosynthesis.II..engineered., PWY.8131..5..deoxyadenosine.degradation.II, PWY1G.0..mycothiol.biosynthesis, NA., NA.1, NA.2, NA.3, NA.4, NA.5, NA.6, NA.7, NA.8, NA.9, NA.10, NA.11, NA.12, NA.13, NA.14, NA.15, NA.16, NA.17, NA.18, NA.19, NA.20, NA.21, NA.22, NA.23, NA.24, NA.25, NA.26, NA.27, NA.28, NA.29, NA.30, NA.31, NA.32, NA.33, NA.34, NA.35, NA.36, NA.37, NA.38, NA.39, NA.40, NA.41, NA.42, NA.43, NA.44, NA.45, NA.46, NA.47, NA.48, NA.49, NA.50, NA.51, NA.52, NA.53, NA.54, NA.55, NA.56, NA.57, NA.58, NA.59, NA.60, NA.61, NA.62, NA.63, NA.64, NA.65, NA.66, NA.67, NA.68, NA.69, NA.70, NA.71, NA.72, NA.73, NA.74, NA.75, NA.76, NA.77, NA.78, NA.79, NA.80, NA.81, NA.82, NA.83, NA.84, NA.85, NA.86, NA.87, NA.88, NA.89, NA.90, NA.91, NA.92, NA.93, NA.94, NA.95, NA.96, NA.97, NA.98, NA.99, NA.100, NA.101, NA.102, NA.103, NA.104, NA.105, NA.106, NA.107, NA.108, NA.109, NA.110, NA.111, NA.112, NA.113, NA.114, NA.115, NA.116, NA.117, NA.118, NA.119, NA.120, NA.121, NA.122, NA.123, NA.124, NA.125, NA.126, NA.127, NA.128, NA.129, NA.130, NA.131, NA.132, NA.133, NA.134, NA.135, NA.136, NA.137, NA.138, NA.139, NA.140, NA.141, NA.142, NA.143, NA.144, NA.145, NA.146, NA.147, NA.148, NA.149, NA.150, NA.151, NA.152, NA.153, NA.154, NA.155, NA.156, NA.157, NA.158, NA.159, NA.160, NA.161, NA.162, NA.163, NA.164, NA.165, NA.166, NA.167, NA.168, NA.169, NA.170, NA.171, NA.172, NA.173, NA.174, NA.175, NA.176, NA.177, NA.178, NA.179, NA.180, NA.181, NA.182, NA.183, NA.184, NA.185, NA.186, NA.187, NA.188, NA.189, NA.190, NA.191, NA.192, NA.193, NA.194, NA.195, NA.196, NA.197, NA.198, NA.199, NA.200, NA.201, NA.202, NA.203, NA.204, NA.205, NA.206, NA.207, NA.208, NA.209, NA.210, NA.211, NA.212, NA.213, NA.214, NA.215, NA.216, NA.217, NA.218, NA.219
+2026-04-13 05:08:48.577573 INFO::Total filtered features with variance filtering: 0
+2026-04-13 05:08:48.577783 INFO::Filtered feature names from variance filtering:
+2026-04-13 05:08:48.577974 INFO::Running selected normalization method: NONE
+2026-04-13 05:08:48.578194 INFO::Applying z-score to standardize continuous metadata
+2026-04-13 05:08:48.579725 INFO::Running selected transform method: LOG
+2026-04-13 05:08:48.58024 INFO::Running selected analysis method: LM
+2026-04-13 05:08:48.676237 INFO::Fitting model to feature number 1, ANAEROFRUCAT.PWY..homolactic.fermentation
+2026-04-13 05:08:48.735586 INFO::Fitting model to feature number 2, ARGININE.SYN4.PWY..L.ornithine.biosynthesis.II
+2026-04-13 05:08:48.752278 INFO::Fitting model to feature number 3, ASPASN.PWY..superpathway.of.L.aspartate.and.L.asparagine.biosynthesis
+2026-04-13 05:08:48.76655 INFO::Fitting model to feature number 4, AST.PWY..L.arginine.degradation.II..AST.pathway.
+2026-04-13 05:08:48.780787 INFO::Fitting model to feature number 5, BRANCHED.CHAIN.AA.SYN.PWY..superpathway.of.branched.chain.amino.acid.biosynthesis
+2026-04-13 05:08:48.794789 INFO::Fitting model to feature number 6, CITRULBIO.PWY..L.citrulline.biosynthesis
+2026-04-13 05:08:48.809047 INFO::Fitting model to feature number 7, COBALSYN.PWY..superpathway.of.adenosylcobalamin.salvage.from.cobinamide.I
+2026-04-13 05:08:48.823346 INFO::Fitting model to feature number 8, DTDPRHAMSYN.PWY..dTDP..beta..L.rhamnose.biosynthesis
+2026-04-13 05:08:48.837909 INFO::Fitting model to feature number 9, GALACTITOLCAT.PWY..galactitol.degradation
+2026-04-13 05:08:48.852395 INFO::Fitting model to feature number 10, GALACTUROCAT.PWY..D.galacturonate.degradation.I
+2026-04-13 05:08:48.866843 INFO::Fitting model to feature number 11, GLUCARGALACTSUPER.PWY..superpathway.of.D.glucarate.and.D.galactarate.degradation
+2026-04-13 05:08:48.88131 INFO::Fitting model to feature number 12, GLUDEG.I.PWY..GABA.shunt
+2026-04-13 05:08:48.895902 INFO::Fitting model to feature number 13, GLYCOGENSYNTH.PWY..glycogen.biosynthesis.I..from.ADP.D.Glucose.
+2026-04-13 05:08:48.916255 INFO::Fitting model to feature number 14, GLYCOLYSIS..glycolysis.I..from.glucose.6.phosphate.
+2026-04-13 05:08:48.930607 INFO::Fitting model to feature number 15, HEME.BIOSYNTHESIS.II.1..heme.b.biosynthesis.V..aerobic.
+2026-04-13 05:08:48.944702 INFO::Fitting model to feature number 16, HISDEG.PWY..L.histidine.degradation.I
+2026-04-13 05:08:48.958786 INFO::Fitting model to feature number 17, PWY.5103..L.isoleucine.biosynthesis.III
+2026-04-13 05:08:48.97299 INFO::Fitting model to feature number 18, PWY.5659..GDP.mannose.biosynthesis
+2026-04-13 05:08:48.987384 INFO::Fitting model to feature number 19, PWY.5676..acetyl.CoA.fermentation.to.butanoate.II
+2026-04-13 05:08:49.001597 INFO::Fitting model to feature number 20, PWY.5695..inosine.5..phosphate.degradation
+2026-04-13 05:08:49.015818 INFO::Fitting model to feature number 21, PWY.5971..palmitate.biosynthesis..type.II.fatty.acid.synthase.
+2026-04-13 05:08:49.030269 INFO::Fitting model to feature number 22, PWY.7013...S..propane.1.2.diol.degradation
+2026-04-13 05:08:49.044805 INFO::Fitting model to feature number 23, PWY.7199..pyrimidine.deoxyribonucleosides.salvage
+2026-04-13 05:08:49.059098 INFO::Fitting model to feature number 24, PWY.7220..adenosine.deoxyribonucleotides.de.novo.biosynthesis.II
+2026-04-13 05:08:49.073425 INFO::Fitting model to feature number 25, PWY.7392..taxadiene.biosynthesis..engineered.
+2026-04-13 05:08:49.087681 INFO::Fitting model to feature number 26, PWY.7977..L.methionine.biosynthesis.IV
+2026-04-13 05:08:49.108285 INFO::Counting total values for each feature
+2026-04-13 05:08:49.10919 INFO::Writing filtered data to file maaslin_crc_vs_paired/features/filtered_data.tsv
+2026-04-13 05:08:49.11068 INFO::Writing filtered, normalized data to file maaslin_crc_vs_paired/features/filtered_data_norm.tsv
+2026-04-13 05:08:49.111792 INFO::Writing filtered, normalized, transformed data to file maaslin_crc_vs_paired/features/filtered_data_norm_transformed.tsv
+2026-04-13 05:08:49.113147 WARNING::Deleting existing residuals file: maaslin_crc_vs_paired/fits/residuals.rds
+2026-04-13 05:08:49.113757 INFO::Writing residuals to file maaslin_crc_vs_paired/fits/residuals.rds
+2026-04-13 05:08:49.114385 WARNING::Deleting existing fitted file: maaslin_crc_vs_paired/fits/fitted.rds
+2026-04-13 05:08:49.114729 INFO::Writing fitted values to file maaslin_crc_vs_paired/fits/fitted.rds
+2026-04-13 05:08:49.115349 WARNING::Deleting existing ranef file: maaslin_crc_vs_paired/fits/ranef.rds
+2026-04-13 05:08:49.115682 INFO::Writing extracted random effects to file maaslin_crc_vs_paired/fits/ranef.rds
+2026-04-13 05:08:49.116225 INFO::Writing all results to file (ordered by increasing q-values): maaslin_crc_vs_paired/all_results.tsv
+2026-04-13 05:08:49.116774 INFO::Writing the significant results (those which are less than or equal to the threshold of 0.250000 ) to file (ordered by increasing q-values): maaslin_crc_vs_paired/significant_results.tsv
+2026-04-13 05:08:49.11716 INFO::Writing heatmap of significant results to file: maaslin_crc_vs_paired/heatmap.pdf
+2026-04-13 05:08:49.117947 INFO::Writing association plots (one for each significant association) to output folder: maaslin_crc_vs_paired
+2026-04-13 05:08:49.11888 INFO::Plotting associations from most to least significant, grouped by metadata
+2026-04-13 05:08:49.119157 INFO::Plotting data for metadata number 1, type
+2026-04-13 05:08:49.119659 INFO::Creating boxplot for categorical data, type vs ASPASN.PWY..superpathway.of.L.aspartate.and.L.asparagine.biosynthesis
+2026-04-13 05:08:49.213128 INFO::Creating boxplot for categorical data, type vs COBALSYN.PWY..superpathway.of.adenosylcobalamin.salvage.from.cobinamide.I
+2026-04-13 05:08:49.29792 INFO::Creating boxplot for categorical data, type vs HISDEG.PWY..L.histidine.degradation.I
+2026-04-13 05:08:49.381532 INFO::Creating boxplot for categorical data, type vs PWY.5659..GDP.mannose.biosynthesis
+2026-04-13 05:08:49.470889 INFO::Creating boxplot for categorical data, type vs PWY.5695..inosine.5..phosphate.degradation
+2026-04-13 05:08:49.552602 INFO::Creating boxplot for categorical data, type vs PWY.7013...S..propane.1.2.diol.degradation
+2026-04-13 05:08:49.638125 INFO::Creating boxplot for categorical data, type vs PWY.7392..taxadiene.biosynthesis..engineered.
+2026-04-13 05:08:49.717382 INFO::Creating boxplot for categorical data, type vs DTDPRHAMSYN.PWY..dTDP..beta..L.rhamnose.biosynthesis
+2026-04-13 05:08:49.801103 INFO::Creating boxplot for categorical data, type vs GLYCOGENSYNTH.PWY..glycogen.biosynthesis.I..from.ADP.D.Glucose.
+2026-04-13 05:08:49.881249 INFO::Creating boxplot for categorical data, type vs PWY.5103..L.isoleucine.biosynthesis.III
+2026-04-13 05:08:49.966543 INFO::Creating boxplot for categorical data, type vs PWY.5971..palmitate.biosynthesis..type.II.fatty.acid.synthase.
+2026-04-13 05:08:50.048561 INFO::Creating boxplot for categorical data, type vs CITRULBIO.PWY..L.citrulline.biosynthesis
+2026-04-13 05:08:50.13183 INFO::Creating boxplot for categorical data, type vs PWY.7220..adenosine.deoxyribonucleotides.de.novo.biosynthesis.II
+2026-04-13 05:08:50.21042 INFO::Creating boxplot for categorical data, type vs PWY.7199..pyrimidine.deoxyribonucleosides.salvage
+2026-04-13 05:08:50.293237 INFO::Creating boxplot for categorical data, type vs BRANCHED.CHAIN.AA.SYN.PWY..superpathway.of.branched.chain.amino.acid.biosynthesis
+2026-04-13 05:08:50.37154 INFO::Creating boxplot for categorical data, type vs GLYCOLYSIS..glycolysis.I..from.glucose.6.phosphate.
+2026-04-13 05:08:50.454019 INFO::Creating boxplot for categorical data, type vs GALACTUROCAT.PWY..D.galacturonate.degradation.I
+2026-04-13 05:08:50.533229 INFO::Creating boxplot for categorical data, type vs ARGININE.SYN4.PWY..L.ornithine.biosynthesis.II
+2026-04-13 05:08:50.616155 INFO::Creating boxplot for categorical data, type vs ANAEROFRUCAT.PWY..homolactic.fermentation
+2026-04-13 05:08:50.700558 INFO::Creating boxplot for categorical data, type vs PWY.7977..L.methionine.biosynthesis.IV
