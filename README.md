@@ -1,37 +1,31 @@
-# bmeg524 — Metatranscriptomics Re-analysis
+# BMEG 524 Final Project: Metatranscriptomic Analysis of Microbial Reads from Colorectal Cancer Patient Biopsies
 
-Re-analysis of Kvich et al. unmapped bacterial RNA-seq reads using two parallel preprocessing tracks.
+Kvich, L. et al. Biofilms and core pathogens shape the tumor microenvironment and immune phenotype in colorectal cancer. Gut Microbes 16, 2350156 (2024). available here: [https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#d1e667](https://www.tandfonline.com/doi/full/10.1080/19490976
 
-**Date created:** 2026-04-12
+This project re-analyzes low-biomass mucosal biopsy RNA-seq data from the colorectal cancer (CRC) study by Kvich et al. to determine whether a more standard metatranscriptomic workflow can recover additional microbial community and functional insights beyond the original study, which primarily focused on the host RNA-seq signal. In this re-analysis, Kvich et al.'s microbial RNA-seq workflow is first reproduced to validate the published findings. The analysis is then extended with additional low-biomass preprocessing, broader taxonomic profiling, and community-wide functional pathway analysis to explore whether more discovery-oriented workflows can reveal microbial signals that were not accessible in the original study.
 
----
+--
 
 ## Dataset
 
 119 paired-end RNA-seq samples (unmapped reads from human alignment).
 
-- La samples: La34–La125 (with gaps) — ~92 samples
-- Lasse samples: Lasse4–Lasse33 — 30 samples (`Lasse{N}` in filenames = `La{N}` in metadata)
-- **La125:** sequencing control, excluded from all analyses
+- CRC: 40 samples, Paired normal: 39 samples, Healthy: 40 samples
 - Read length: ~150 bp (Illumina A00962)
 
 Sample lists: `samples_all.txt` (119), `samples_filtered.txt` (86), `excluded_samples.txt` (33 excluded)
 
 ---
 
-## Two-Track Structure
-
-### Track 1: `no_kneaddata/` — all 119 samples
+### Pre-processed by Kvich et al.: `no_kneaddata/` - all 119 samples
 No additional human read removal (reads already from upstream unmapped fraction).
 
 bwa-mem → featureCounts (B. frag + F. nuc reference) → Kraken2 (--confidence 0.05) → Bracken → normalize
 
 HUMANn3 not analysed for this track.
 
-### Track 2: `kneaddata/` — 86 samples
+### Re Pre-preprocessed and filtered: `kneaddata/` - subset of 86 samples
 33 excluded (Lasse4–33 except Lasse9/20/25; La50, La54, La68, La73, La77, La89).
-
-KneadData v0.12.4 (hg39 T2T, SLIDINGWINDOW:4:20 MINLEN:50 LEADING:3 TRAILING:3) → Kraken2 (--confidence 0.05) → Bracken → normalize → HUMANn3 (84 samples; La98 + La125 excluded)
 
 See `no_kneaddata/README.md` and `kneaddata/README.md` for per-track details.
 
@@ -76,10 +70,57 @@ bmeg524/
 
 ---
 
-## Notes
+## Kvich et al. workflow
 
-- BAMs not copied (too large) — at `/scratch/st-ctropini-1/ahong/bfrag3/output/bam/`
-- `kneaddata/kneaddata_output/` is a symlink — copy manually (`cp -rL`) if moving off scratch
-- `input/`, `refs/`, `dbs/` are symlinks to large files — exclude when rsyncing
-- HUMANn3 output filenames contain `_cat_` (input was concatenated R1+R2: `{sample}_cat.fq`)
-- High duplication in La samples is expected for RNA-seq metatranscriptomics
+```mermaid
+flowchart TD
+    A[Raw sequencing data<br/>bcl files] --> B[Demultiplex]
+    B --> C[Cutadapt]
+    C --> D[SortMeRNA]
+    D --> E[bwa-mem<br/>GRCh38.p13]
+
+    E --> F[Human reads]
+    E --> G[Unmapped reads]
+
+    G --> H[Kraken2 / Bracken]
+    H --> I[Scaling factor]
+
+    I --> J[Unscaled counts]
+    I --> K[Scaled counts]
+
+    J --> L[Across-sample comparison]
+    K --> M[Within-sample comparison]
+
+    G --> N[Custom reference genome:<br/>Concatenated B. fragilis + F. nucleatum]
+    N --> O[bwa-mem]
+    O --> P[VST]
+```
+
+## My workflow
+
+```mermaid
+flowchart TD
+    A[Raw sequencing data<br/>bcl files] --> B[Demultiplex]
+    B --> C[Cutadapt]
+    C --> D[SortMeRNA]
+    D --> E[bwa-mem<br/>GRCh38.p13]
+
+    E --> F[Human reads]
+    E --> G[Unmapped reads]
+
+    G --> H[KneadData<br/>quality trim + host depletion]
+    H --> I[Filter low-depth samples<br/>< 100k paired reads]
+
+    I --> J[Kraken2 / Bracken<br/>confidence = 0.05]
+    J --> K[Convert Bracken report<br/>to MetaPhlAn-style profile]
+
+    K --> L[HUMAnN 3]
+    L --> M[Normalization<br/>CPM]
+
+    M --> N[MaAsLin2<br/>paired differential pathway analysis]
+```
+
+## GenAI Acknowledgement
+
+- OpenAI. (2026). ChatGPT (April 13 version) [Large language model]. https://chatgpt.com/
+- Anthropic. (2026). Claude Code (April 13 version) [Large language model]. https://claude.ai/

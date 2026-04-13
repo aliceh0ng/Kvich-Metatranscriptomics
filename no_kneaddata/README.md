@@ -1,66 +1,126 @@
-# BMEG 524 Final Project: Metatranscriptomic Analysis of Microbial Reads from Colorectal Cancer Patient Biopsies
+## Outputs from samples directly from Kvich et al. (no further pre-processing)
 
-Kvich, L. et al. Biofilms and core pathogens shape the tumor microenvironment and immune phenotype in colorectal cancer. Gut Microbes 16, 2350156 (2024). available here: [https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#d1e667](https://www.tandfonline.com/doi/full/10.1080/19490976
+No additional human read removal applied. Reads are already the unmapped fraction from the upstream human alignment pipeline (Kvich et al.: Cutadapt → SortMeRNA → bwa-mem to GRCh38).
 
-This project re-analyzes low-biomass mucosal biopsy RNA-seq data from the colorectal cancer (CRC) study by Kvich et al. to determine whether a more standard metatranscriptomic workflow can recover additional microbial community and functional insights beyond the original study, which primarily focused on the host RNA-seq signal. In this re-analysis, Kvich et al.'s microbial RNA-seq workflow is first reproduced to validate the published findings. The analysis is then extended with additional low-biomass preprocessing, broader taxonomic profiling, and community-wide functional pathway analysis to explore whether more discovery-oriented workflows can reveal microbial signals that were not accessible in the original study.
+**Samples:** 119 (all)  
+**Input:** `../input/{sample}_unmapped_R1/R2.fq`
 
-Main goals
+### Pipeline summary
 
-Reproduce the published microbial findings from Kvich et al.
+| Step | Script | Output |
+|---|---|---|
+| 1. Align to B. frag + F. nuc | `01_align_bwa.sh` | `alignment/bam/` (not copied) |
+| 2. Alignment QC | `02_flagstat.sh` | `qc/flagstat/` |
+| 3. Quantify gene expression | `03_featurecounts.sh` | `alignment/counts/counts.txt` |
+| 3b. Parse gene annotations | `03b_make_gene_annotations.py` | `alignment/gene_annotations.tsv` |
+| 4. Taxonomic classification | `04_kraken2.sh` | `community_composition/kraken2/` |
+| 5. Abundance estimation | `05_bracken.sh` | `community_composition/bracken/` |
+| 6. Normalize Bracken counts | `07_normalize_bracken.py` | `community_composition/normalized/` |
 
-Benchmark the effect of extra preprocessing in low-biomass biopsy data
+HUMANn3 was not analysed for this track (kneaddata track only).
 
-Extend the analysis to community-wide taxonomic and functional profiling
+---
 
-Identify CRC-associated microbial pathways using paired statistical models
+### qc/flagstat/
 
-Compare the strengths of targeted reference mapping vs discovery-oriented metatranscriptomic workflows
+**Tool:** samtools flagstat  
+**Script:** `scripts/no_kneaddata/02_flagstat.sh`
 
-Tools used
+119 files, one per sample: `{sample}.flagstat` — alignment summary statistics from `samtools flagstat` on the bwa-mem BAM (total reads, mapped reads, paired reads, properly paired, etc.).
 
-bwa-mem
+---
 
-featureCounts
+### qc/multiqc/
 
-samtools / MultiQC / FastQC
+**Tool:** MultiQC v1.33
 
-KneadData
+| File | Description |
+|---|---|
+| `bwa_alignment_qc.html` | MultiQC report aggregating samtools flagstat for all 119 samples |
 
-Kraken2 + Bracken
+Per-sample FastQC on raw input reads was not run for this track (reads came pre-trimmed from the upstream human pipeline).
 
-HUMAnN3
+---
 
-MaAsLin2
+### alignment/
 
-R (tidyverse, ggplot2, patchwork)
+**Tool:** bwa-mem v0.7.19  
+**Reference:** `refs/combined/combined_bfrag_fnuc.fna` (B. fragilis GCF_003019295.1 + F. nucleatum GCF_016889925.1, concatenated)  
+**Scripts:** `scripts/no_kneaddata/01_align_bwa.sh`, `scripts/no_kneaddata/03_featurecounts.sh`  
+**Samples:** 119
 
-SLURM / UBC ARC Sockeye HPC
+#### `counts/counts.txt`
 
+featureCounts output matrix — gene × sample raw read counts.  
+Parameters: `-p` (paired-end), `-B` (both mates must map), `-C` (discard chimeric pairs), `-t CDS`, `-g gene_id`.  
+Annotation: `refs/combined/combined_bfrag_fnuc.gtf`
 
-```mermaid
-flowchart TD
-    A[Raw sequencing data<br/>bcl files] --> B[Demultiplex]
-    B --> C[Cutadapt]
-    C --> D[SortMeRNA]
-    D --> E[bwa-mem<br/>GRCh38.p13]
+#### `gene_annotations.tsv`
 
-    E --> F[Human reads]
-    E --> G[Unmapped reads]
+Parsed from `refs/combined/combined_bfrag_fnuc.gtf` by `scripts/no_kneaddata/03b_make_gene_annotations.py`.  
+Columns: `gene_id`, `gene` (name), `product` (functional description from CDS lines).
 
-    G --> H[Kraken2 / Bracken]
-    H --> I[Scaling factor]
-
-    I --> J[Unscaled counts]
-    I --> K[Scaled counts]
-
-    J --> L[Across-sample comparison]
-    K --> M[Within-sample comparison]
-
-    G --> N[Custom reference genome<br/>Concatenated B. fragilis + F. nucleatum]
-    N --> O[bwa-mem]
-    O --> P[VST]
+To regenerate (run from `bmeg524/` root):
+```bash
+python scripts/no_kneaddata/03b_make_gene_annotations.py \
+    refs/combined/combined_bfrag_fnuc.gtf \
+    > no_kneaddata/alignment/gene_annotations.tsv
 ```
 
-## GenAI Acknowledgement
-- OpenAI. (2026). ChatGPT (April 13 version) [Large language model]. https://chatgpt.com/
-- Anthropic. (2026). Claude Code (April 13 version) [Large language model]. https://claude.ai/
+BAMs are not copied (too large). Find them at:
+```
+/scratch/st-ctropini-1/ahong/bfrag3/output/bam/{sample}.bam
+/scratch/st-ctropini-1/ahong/bfrag3/output/bam/{sample}.bam.bai
+```
+
+---
+
+### community_composition/kraken2/
+
+**Source:** bfrag3 `output/kraken2_conf0.05/`  
+**Tool:** Kraken2 2.17.1  
+**Script:** `scripts/no_kneaddata/04_kraken2.sh`  
+**Database:** Kraken2 standard (k2_standard_20260226)  
+**Parameters:** `--confidence 0.05`, `--paired`; classified reads discarded (`--output /dev/null`)
+
+119 files: `{sample}.report` — Kraken2 report format (% reads, clade counts, rank, taxon name)
+
+---
+
+### community_composition/bracken/
+
+**Source:** bfrag3 `output/bracken_conf0.05/`  
+**Tool:** Bracken 3.1  
+**Script:** `scripts/no_kneaddata/05_bracken.sh`  
+**Parameters:** `-r 150` (read length), `-l S` (species level), `-t 10`
+
+238 files, two per sample:
+
+| File | Description |
+|---|---|
+| `{sample}.bracken` | Tab-separated: name, taxonomy_id, level, kraken reads, bracken reads, fraction |
+| `{sample}_bracken.report` | Bracken-corrected Kraken2 report format |
+
+---
+
+### community_composition/normalized/
+
+**Script:** `scripts/no_kneaddata/07_normalize_bracken.py`  
+**Method:** Kvich et al. depth normalization
+
+1. Read counts from raw R1 FASTQ (`wc -l / 4`)
+2. Scaling factor = `min_reads_across_samples / reads_in_sample`
+3. Scaled counts = `bracken new_est_reads × scaling_factor`
+4. Remove taxa where `log10(scaled_count + 1) < 0.9` in all samples (~8 reads)
+
+| File | Description | Use for |
+|---|---|---|
+| `counts_unscaled.tsv` | Raw Bracken `new_est_reads` | Within-sample comparisons |
+| `counts_scaled.tsv` | Depth-normalized counts | Across-sample comparisons |
+| `counts_filtered.tsv` | Scaled + low-abundance taxa removed | Downstream stats |
+| `scaling_factors.tsv` | Per-sample read counts and scaling factors | QC / reporting |
+
+All 119 samples included (no exclusions in this track). Run from `bmeg524/` root to reproduce:
+```bash
+python scripts/no_kneaddata/07_normalize_bracken.py
+```
