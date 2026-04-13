@@ -1,0 +1,29 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Escherichia coli	562	S	187	2150	2337	0.38833
+Klebsiella pneumoniae	573	S	19	297	316	0.05251
+Pseudomonas aeruginosa	287	S	18	169	187	0.03107
+Paracoccus yeei	147645	S	16	23	39	0.00648
+Delftia acidovorans	80866	S	15	47	62	0.01030
+Herbaspirillum huttiense	863372	S	28	10	38	0.00631
+Cupriavidus basilensis	68895	S	12	6	18	0.00299
+Bacteroides fragilis	817	S	18	37	55	0.00914
+Bacteroides caccae	47678	S	15	2	17	0.00282
+Phocaeicola vulgatus	821	S	41	44	85	0.01412
+Parabacteroides merdae	46503	S	17	12	29	0.00482
+Alistipes putredinis	28117	S	23	5	28	0.00465
+Barnesiella intestinihominis	487174	S	21	1	22	0.00366
+Cutibacterium acnes	1747	S	640	83	723	0.12014
+Cutibacterium granulosum	33011	S	13	2	15	0.00249
+Micrococcus luteus	1270	S	22	109	131	0.02177
+Corynebacterium kroppenstedtii	161879	S	12	48	60	0.00997
+Actinomyces naeslundii	1655	S	10	10	20	0.00332
+Collinsella aerofaciens	74426	S	42	41	83	0.01379
+Eggerthella lenta	84112	S	11	1	12	0.00199
+Allocoprococcus comes	410072	S	160	75	235	0.03905
+[Ruminococcus] torques	33039	S	25	60	85	0.01412
+Mediterraneibacter gnavus	33038	S	15	6	21	0.00349
+Faecalibacterium prausnitzii	853	S	79	52	131	0.02177
+Faecalibacterium sp. I3-3-89	2929493	S	26	17	43	0.00715
+Cloacibacillus evryensis	508460	S	25	0	25	0.00415
+Allomeiothermus silvanus	52022	S	21	0	21	0.00349
+Homo sapiens	9606	S	875	294	1169	0.19425

@@ -1,0 +1,22 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Mediterraneibacter gnavus	33038	S	144	126	270	0.08780
+[Ruminococcus] torques	33039	S	39	37	76	0.02472
+Blautia wexlerae	418240	S	38	107	145	0.04715
+Blautia obeum	40520	S	20	30	50	0.01626
+Anaerobutyricum hallii	39488	S	24	43	67	0.02179
+Roseburia hominis	301301	S	10	19	29	0.00943
+Dorea formicigenerans	39486	S	11	13	24	0.00780
+Dorea longicatena	88431	S	10	17	27	0.00878
+Allocoprococcus comes	410072	S	24	28	52	0.01691
+Anaerostipes hadrus	649756	S	22	10	32	0.01041
+Agathobacter rectalis	39491	S	11	9	20	0.00650
+Faecalibacterium prausnitzii	853	S	71	86	157	0.05106
+Eubacterium ramulus	39490	S	16	19	35	0.01138
+Cutibacterium acnes	1747	S	145	45	190	0.06179
+Collinsella aerofaciens	74426	S	22	17	39	0.01268
+Escherichia coli	562	S	15	883	898	0.29203
+Delftia acidovorans	80866	S	27	58	85	0.02764
+Herbaspirillum huttiense	863372	S	36	12	48	0.01561
+Phocaeicola dorei	357276	S	63	47	110	0.03577
+Bilophila wadsworthia	35833	S	21	0	21	0.00683
+Homo sapiens	9606	S	545	146	691	0.22472

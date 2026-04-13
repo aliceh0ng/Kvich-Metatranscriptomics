@@ -1,0 +1,10 @@
+
+/// MultiQC 🔍 v1.33
+
+       file_search | Search path: /scratch/st-ctropini-1/ahong/bfrag4/fastqc_output
+
+            fastqc | Found 238 reports
+
+     write_results | Data        : multiqc_output/multiqc_report_data
+     write_results | Report      : multiqc_output/multiqc_report.html
+           multiqc | MultiQC complete

@@ -1,0 +1,21 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Anaerostipes hadrus	649756	S	178	33	211	0.08694
+Blautia obeum	40520	S	36	20	56	0.02307
+Blautia wexlerae	418240	S	19	17	36	0.01483
+Roseburia sp. 831b	1261635	S	10	19	29	0.01195
+Simiaoa sunii	2763672	S	10	2	12	0.00494
+Faecalibacterium sp. I3-3-89	2929493	S	27	21	48	0.01978
+Faecalibacterium prausnitzii	853	S	25	37	62	0.02555
+Anaerococcus obesiensis	1287640	S	38	21	59	0.02431
+Anaerococcus vaginalis	33037	S	24	13	37	0.01525
+Granulicatella adiacens	46124	S	25	1	26	0.01071
+Cutibacterium acnes	1747	S	125	19	144	0.05933
+Collinsella aerofaciens	74426	S	20	9	29	0.01195
+Escherichia coli	562	S	23	450	473	0.19489
+Sutterella wadsworthensis	40545	S	18	1	19	0.00783
+Herbaspirillum huttiense	863372	S	14	3	17	0.00700
+Phocaeicola vulgatus	821	S	32	23	55	0.02266
+Bacteroides nordii	291645	S	10	17	27	0.01112
+Desulfovibrio piger	901	S	13	1	14	0.00577
+Fusobacterium gonidiaformans	849	S	31	6	37	0.01525
+Homo sapiens	9606	S	741	285	1026	0.42274

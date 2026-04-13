@@ -1,0 +1,39 @@
+# Large HUMAnN3 merged output files (exceed GitHub 100MB limit)
+kneaddata/functional_profiling/humann3_merged/all_genefamilies.tsv
+kneaddata/functional_profiling/humann3_merged/all_genefamilies_cpm.tsv
+kneaddata/functional_profiling/humann3_merged/all_genefamilies_cpm_stratified.tsv
+kneaddata/functional_profiling/humann3_merged/all_genefamilies_cpm_unstratified.tsv
+
+# FastQC per-sample reports (~330MB each dir)
+kneaddata/qc/fastqc_pre/
+kneaddata/qc/fastqc_post/
+
+# MultiQC backing data (parquet/JSON) — HTML reports are tracked
+**/*_data/
+**/*_data_1/
+
+# Bioinformatics large binary / raw data
+*.bam
+*.bai
+*.fq
+*.fastq
+*.fq.gz
+*.fastq.gz
+*.fna
+*.fa
+*.fasta
+*.gtf
+
+# R
+.RData
+.Rhistory
+*.Rproj.user/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+.Rproj.user

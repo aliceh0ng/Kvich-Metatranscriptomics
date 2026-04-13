@@ -1,0 +1,114 @@
+100.00	2427	0	R	1	root
+100.00	2427	0	R1	131567	  cellular organisms
+57.70	1400	0	D	2	    Bacteria
+31.16	756	0	K	1783272	      Bacillati
+23.98	582	0	P	1239	        Bacillota
+18.88	458	0	C	186801	          Clostridia
+14.30	347	0	O	3085636	            Lachnospirales
+14.30	347	0	F	186803	              Lachnospiraceae
+8.72	211	0	G	207244	                Anaerostipes
+8.72	211	211	S	649756	                  Anaerostipes hadrus
+3.83	92	0	G	572511	                Blautia
+2.32	56	56	S	40520	                  Blautia obeum
+1.52	36	36	S	418240	                  Blautia wexlerae
+1.21	29	0	G	841	                Roseburia
+1.21	29	0	G1	2637578	                  unclassified Roseburia
+1.21	29	29	S	1261635	                    Roseburia sp. 831b
+0.53	12	0	G	2944193	                Simiaoa
+0.53	12	12	S	2763672	                  Simiaoa sunii
+4.58	111	0	O	186802	            Eubacteriales
+4.58	111	0	F	216572	              Oscillospiraceae
+4.58	111	0	G	216851	                Faecalibacterium
+2.01	48	0	G1	2646395	                  unclassified Faecalibacterium
+2.01	48	48	S	2929493	                    Faecalibacterium sp. I3-3-89
+2.57	62	62	S	853	                  Faecalibacterium prausnitzii
+4.00	97	0	C	1737404	          Tissierellia
+4.00	97	0	O	1737405	            Tissierellales
+4.00	97	0	F	1570339	              Peptoniphilaceae
+4.00	97	0	G	165779	                Anaerococcus
+2.43	59	59	S	1287640	                  Anaerococcus obesiensis
+1.56	37	37	S	33037	                  Anaerococcus vaginalis
+1.10	26	0	C	91061	          Bacilli
+1.10	26	0	O	186826	            Lactobacillales
+1.10	26	0	F	186828	              Carnobacteriaceae
+1.10	26	0	G	117563	                Granulicatella
+1.10	26	26	S	46124	                  Granulicatella adiacens
+7.18	174	0	P	201174	        Actinomycetota
+5.97	144	0	C	1760	          Actinomycetes
+5.97	144	0	O	85009	            Propionibacteriales
+5.97	144	0	F	31957	              Propionibacteriaceae
+5.97	144	0	G	1912216	                Cutibacterium
+5.97	144	144	S	1747	                  Cutibacterium acnes
+1.21	29	0	C	84998	          Coriobacteriia
+1.21	29	0	O	84999	            Coriobacteriales
+1.21	29	0	F	84107	              Coriobacteriaceae
+1.21	29	0	G	102106	                Collinsella
+1.21	29	29	S	74426	                  Collinsella aerofaciens
+25.01	606	0	K	3379134	      Pseudomonadati
+21.03	510	0	P	1224	        Pseudomonadota
+19.51	473	0	C	1236	          Gammaproteobacteria
+19.51	473	0	O	91347	            Enterobacterales
+19.51	473	0	F	543	              Enterobacteriaceae
+19.51	473	0	G	561	                Escherichia
+19.51	473	473	S	562	                  Escherichia coli
+1.52	36	0	C	28216	          Betaproteobacteria
+1.52	36	0	O	80840	            Burkholderiales
+0.80	19	0	F	995019	              Sutterellaceae
+0.80	19	0	G	40544	                Sutterella
+0.80	19	19	S	40545	                  Sutterella wadsworthensis
+0.72	17	0	F	75682	              Oxalobacteraceae
+0.72	17	0	G	963	                Herbaspirillum
+0.72	17	17	S	863372	                  Herbaspirillum huttiense
+3.40	82	0	K1	1783270	        FCB group
+3.40	82	0	K2	68336	          Bacteroidota/Chlorobiota group
+3.40	82	0	P	976	            Bacteroidota
+3.40	82	0	C	200643	              Bacteroidia
+3.40	82	0	O	171549	                Bacteroidales
+3.40	82	0	F	815	                  Bacteroidaceae
+2.27	55	0	G	909656	                    Phocaeicola
+2.27	55	55	S	821	                      Phocaeicola vulgatus
+1.14	27	0	G	816	                    Bacteroides
+1.14	27	27	S	291645	                      Bacteroides nordii
+0.58	14	0	P	200940	        Thermodesulfobacteriota
+0.58	14	0	C	3031449	          Desulfovibrionia
+0.58	14	0	O	213115	            Desulfovibrionales
+0.58	14	0	F	194924	              Desulfovibrionaceae
+0.58	14	0	G	872	                Desulfovibrio
+0.58	14	14	S	901	                  Desulfovibrio piger
+1.53	37	0	K	3384189	      Fusobacteriati
+1.53	37	0	P	32066	        Fusobacteriota
+1.53	37	0	C	203490	          Fusobacteriia
+1.53	37	0	O	203491	            Fusobacteriales
+1.53	37	0	F	203492	              Fusobacteriaceae
+1.53	37	0	G	848	                Fusobacterium
+1.53	37	37	S	849	                  Fusobacterium gonidiaformans
+42.30	1026	0	D	2759	    Eukaryota
+42.30	1026	0	D1	33154	      Opisthokonta
+42.30	1026	0	K	33208	        Metazoa
+42.30	1026	0	K1	6072	          Eumetazoa
+42.30	1026	0	K2	33213	            Bilateria
+42.30	1026	0	K3	33511	              Deuterostomia
+42.30	1026	0	P	7711	                Chordata
+42.30	1026	0	P1	89593	                  Craniata
+42.30	1026	0	P2	7742	                    Vertebrata
+42.30	1026	0	P3	7776	                      Gnathostomata
+42.30	1026	0	P4	117570	                        Teleostomi
+42.30	1026	0	P5	117571	                          Euteleostomi
+42.30	1026	0	P6	8287	                            Sarcopterygii
+42.30	1026	0	P7	1338369	                              Dipnotetrapodomorpha
+42.30	1026	0	P8	32523	                                Tetrapoda
+42.30	1026	0	P9	32524	                                  Amniota
+42.30	1026	0	C	40674	                                    Mammalia
+42.30	1026	0	C1	32525	                                      Theria
+42.30	1026	0	C2	9347	                                        Eutheria
+42.30	1026	0	C3	1437010	                                          Boreoeutheria
+42.30	1026	0	C4	314146	                                            Euarchontoglires
+42.30	1026	0	O	9443	                                              Primates
+42.30	1026	0	O1	376913	                                                Haplorrhini
+42.30	1026	0	O2	314293	                                                  Simiiformes
+42.30	1026	0	O3	9526	                                                    Catarrhini
+42.30	1026	0	O4	314295	                                                      Hominoidea
+42.30	1026	0	F	9604	                                                        Hominidae
+42.30	1026	0	F1	207598	                                                          Homininae
+42.30	1026	0	G	9605	                                                            Homo
+42.30	1026	1026	S	9606	                                                              Homo sapiens

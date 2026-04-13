@@ -1,0 +1,32 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Escherichia coli	562	S	474	4908	5382	0.52936
+Enterobacter hormaechei	158836	S	16	136	152	0.01495
+Delftia acidovorans	80866	S	26	53	79	0.00777
+Herbaspirillum huttiense	863372	S	26	6	32	0.00315
+Mesorhizobium sp. Pch-S	2082387	S	12	1	13	0.00128
+Terribium terrae	2725666	S	10	23	33	0.00325
+Phocaeicola vulgatus	821	S	55	67	122	0.01200
+Phocaeicola dorei	357276	S	14	20	34	0.00334
+Bacteroides fragilis	817	S	11	24	35	0.00344
+Alistipes putredinis	28117	S	32	8	40	0.00393
+Alistipes shahii	328814	S	15	9	24	0.00236
+Parabacteroides merdae	46503	S	11	13	24	0.00236
+Desulfovibrio piger	901	S	50	1	51	0.00502
+Bilophila wadsworthia	35833	S	12	0	12	0.00118
+Faecalibacterium prausnitzii	853	S	1335	558	1893	0.18619
+Faecalibacterium sp. I3-3-89	2929493	S	66	16	82	0.00807
+Faecalibacterium duncaniae	411483	S	13	18	31	0.00305
+Vescimonas coprocola	2714355	S	24	4	28	0.00275
+Vescimonas fastidiosa	2714353	S	12	2	14	0.00138
+Enterocloster asparagiformis	333367	S	77	46	123	0.01210
+Blautia wexlerae	418240	S	35	43	78	0.00767
+Blautia obeum	40520	S	20	13	33	0.00325
+Allocoprococcus comes	410072	S	67	54	121	0.01190
+Dorea formicigenerans	39486	S	16	18	34	0.00334
+Anaerobutyricum hallii	39488	S	13	17	30	0.00295
+Phascolarctobacterium succinatutens	626940	S	35	11	46	0.00452
+Cutibacterium acnes	1747	S	138	48	186	0.01829
+Leucobacter chromiireducens	283877	S	13	11	24	0.00236
+Collinsella aerofaciens	74426	S	15	20	35	0.00344
+Homo sapiens	9606	S	1098	253	1351	0.13288
+Lymphocryptovirus humangamma4	3050299	S	10	1	11	0.00108

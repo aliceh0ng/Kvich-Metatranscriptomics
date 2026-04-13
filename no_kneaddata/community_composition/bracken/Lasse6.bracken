@@ -1,0 +1,47 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+[Ruminococcus] torques	33039	S	853	783	1636	0.18883
+Mediterraneibacter faecis	592978	S	679	564	1243	0.14347
+[Ruminococcus] lactaris	46228	S	31	2	33	0.00381
+Mediterraneibacter gnavus	33038	S	25	4	29	0.00335
+Allocoprococcus comes	410072	S	340	73	413	0.04767
+Blautia wexlerae	418240	S	40	30	70	0.00808
+Blautia obeum	40520	S	11	4	15	0.00173
+Dorea formicigenerans	39486	S	22	6	28	0.00323
+Dorea longicatena	88431	S	12	11	23	0.00265
+Anaerobutyricum hallii	39488	S	26	9	35	0.00404
+Agathobacter rectalis	39491	S	24	3	27	0.00312
+Faecalibacterium sp. I3-3-89	2929493	S	212	77	289	0.03336
+Faecalibacterium prausnitzii	853	S	173	123	296	0.03416
+Vescimonas fastidiosa	2714353	S	11	3	14	0.00162
+Vescimonas coprocola	2714355	S	10	3	13	0.00150
+Flavonifractor plautii	292800	S	20	5	25	0.00289
+Eubacterium ramulus	39490	S	11	1	12	0.00139
+Streptococcus salivarius	1304	S	10	31	41	0.00473
+Phascolarctobacterium sp. Marseille-Q4147	2823317	S	27	7	34	0.00392
+Phascolarctobacterium succinatutens	626940	S	24	10	34	0.00392
+Thomasclavelia ramosa	1547	S	20	0	20	0.00231
+Cutibacterium acnes	1747	S	281	37	318	0.03670
+Micrococcus luteus	1270	S	14	51	65	0.00750
+Leucobacter chromiireducens	283877	S	11	2	13	0.00150
+Collinsella aerofaciens	74426	S	16	17	33	0.00381
+Escherichia coli	562	S	17	1341	1358	0.15674
+Faucicola osloensis	34062	S	14	0	14	0.00162
+Delftia acidovorans	80866	S	12	57	69	0.00796
+Herbaspirillum huttiense	863372	S	35	30	65	0.00750
+Duodenibacillus massiliensis	1852381	S	11	5	16	0.00185
+Phocaeicola vulgatus	821	S	400	190	590	0.06810
+Phocaeicola dorei	357276	S	122	62	184	0.02124
+Bacteroides caccae	47678	S	77	12	89	0.01027
+Bacteroides salyersiae	291644	S	32	2	34	0.00392
+Bacteroides thetaiotaomicron	818	S	25	6	31	0.00358
+Bacteroides stercoris	46506	S	23	5	28	0.00323
+Bacteroides uniformis	820	S	22	24	46	0.00531
+Bacteroides intestinalis	329854	S	14	1	15	0.00173
+Bacteroides fragilis	817	S	12	23	35	0.00404
+Parabacteroides goldsteinii	328812	S	108	31	139	0.01604
+Parabacteroides merdae	46503	S	32	39	71	0.00819
+Alistipes putredinis	28117	S	67	9	76	0.00877
+Paraprevotella clara	454154	S	42	6	48	0.00554
+Bilophila wadsworthia	35833	S	38	0	38	0.00439
+Desulfovibrio piger	901	S	15	1	16	0.00185
+Homo sapiens	9606	S	674	247	921	0.10630

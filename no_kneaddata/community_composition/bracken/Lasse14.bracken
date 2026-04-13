@@ -1,0 +1,53 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Blautia wexlerae	418240	S	714	415	1129	0.10148
+Blautia obeum	40520	S	73	24	97	0.00872
+Blautia luti	89014	S	22	11	33	0.00297
+Anaerostipes hadrus	649756	S	806	76	882	0.07928
+[Ruminococcus] torques	33039	S	246	224	470	0.04225
+Mediterraneibacter faecis	592978	S	92	100	192	0.01726
+[Ruminococcus] lactaris	46228	S	41	3	44	0.00396
+Mediterraneibacter glycyrrhizinilyticus	342942	S	14	3	17	0.00153
+Mediterraneibacter gnavus	33038	S	12	2	14	0.00126
+Dorea longicatena	88431	S	301	196	497	0.04467
+Dorea amylophila	2981789	S	60	93	153	0.01375
+Dorea formicigenerans	39486	S	22	5	27	0.00243
+Allocoprococcus comes	410072	S	355	79	434	0.03901
+Anaerobutyricum hallii	39488	S	24	26	50	0.00449
+Roseburia hominis	301301	S	13	5	18	0.00162
+Faecalibacterium prausnitzii	853	S	167	310	477	0.04288
+Faecalibacterium sp. I3-3-89	2929493	S	28	39	67	0.00602
+Faecalibacterium duncaniae	411483	S	28	164	192	0.01726
+Faecalibacterium hominis (ex Afrizal et al. 2022)	2881265	S	17	83	100	0.00899
+uncultured Subdoligranulum sp.	512298	S	12	29	41	0.00369
+Hominenteromicrobium mulieris	2885357	S	14	5	19	0.00171
+Flavonifractor plautii	292800	S	13	4	17	0.00153
+Dialister hominis	2582419	S	61	2	63	0.00566
+Micrococcus luteus	1270	S	99	369	468	0.04207
+Leucobacter chromiireducens	283877	S	10	4	14	0.00126
+Cutibacterium acnes	1747	S	282	34	316	0.02840
+Cutibacterium granulosum	33011	S	10	1	11	0.00099
+Corynebacterium kroppenstedtii	161879	S	17	29	46	0.00413
+Collinsella aerofaciens	74426	S	56	39	95	0.00854
+Eggerthella lenta	84112	S	10	2	12	0.00108
+Escherichia coli	562	S	45	2385	2430	0.21843
+Faucicola osloensis	34062	S	16	1	17	0.00153
+Delftia acidovorans	80866	S	29	112	141	0.01267
+Comamonas testosteroni	285	S	10	10	20	0.00180
+Sutterella wadsworthensis	40545	S	110	1	111	0.00998
+Herbaspirillum huttiense	863372	S	48	11	59	0.00530
+Paracoccus yeei	147645	S	12	50	62	0.00557
+Segatella copri	165179	S	642	63	705	0.06337
+Paraprevotella clara	454154	S	20	1	21	0.00189
+Phocaeicola vulgatus	821	S	244	89	333	0.02993
+Phocaeicola dorei	357276	S	12	4	16	0.00144
+Bacteroides stercoris	46506	S	25	8	33	0.00297
+Bacteroides faecis	674529	S	22	17	39	0.00351
+Bacteroides caccae	47678	S	17	4	21	0.00189
+Parabacteroides merdae	46503	S	34	5	39	0.00351
+Parabacteroides distasonis	823	S	21	23	44	0.00396
+Alistipes putredinis	28117	S	47	7	54	0.00485
+Coprobacter fastidiosus	1099853	S	14	0	14	0.00126
+Odoribacter splanchnicus	28118	S	10	0	10	0.00090
+Akkermansia biwaensis	2946555	S	18	3	21	0.00189
+Bilophila wadsworthia	35833	S	17	1	18	0.00162
+Homo sapiens	9606	S	710	189	899	0.08081

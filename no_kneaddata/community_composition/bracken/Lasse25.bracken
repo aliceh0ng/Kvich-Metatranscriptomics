@@ -1,0 +1,108 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Blautia wexlerae	418240	S	30384	7559	37943	0.28943
+Blautia luti	89014	S	791	170	961	0.00733
+Blautia hansenii	1322	S	219	27	246	0.00188
+Blautia obeum	40520	S	205	28	233	0.00178
+Blautia hydrogenotrophica	53443	S	41	1	42	0.00032
+Blautia argi	1912897	S	28	2	30	0.00023
+Blautia producta	33035	S	11	0	11	0.00008
+Anaerostipes hadrus	649756	S	17444	646	18090	0.13799
+Anaerostipes caccae	105841	S	71	7	78	0.00059
+Anaerostipes sp. PC18	3036926	S	12	3	15	0.00011
+Anaerobutyricum hallii	39488	S	4157	2917	7074	0.05396
+Mediterraneibacter gnavus	33038	S	1790	155	1945	0.01484
+[Ruminococcus] torques	33039	S	977	119	1096	0.00836
+Mediterraneibacter glycyrrhizinilyticus	342942	S	110	13	123	0.00094
+Faecalimonas umbilicata	1912855	S	2067	183	2250	0.01716
+Enterocloster bolteae	208479	S	1104	618	1722	0.01314
+Enterocloster clostridioformis	1531	S	121	85	206	0.00157
+Enterocloster asparagiformis	333367	S	25	22	47	0.00036
+Roseburia intestinalis	166486	S	569	495	1064	0.00812
+Roseburia faecis	301302	S	44	2	46	0.00035
+Roseburia sp. 831b	1261635	S	11	1	12	0.00009
+Roseburia hominis	301301	S	11	0	11	0.00008
+Roseburia rectibacter	2763062	S	10	1	11	0.00008
+[Clostridium] hylemonae	89153	S	291	19	310	0.00236
+[Clostridium] scindens	29347	S	71	5	76	0.00058
+Sellimonas intestinalis	1653434	S	294	22	316	0.00241
+Sellimonas caecigallum	2592333	S	28	2	30	0.00023
+Sellimonas catena	2994035	S	14	1	15	0.00011
+Dorea formicigenerans	39486	S	101	18	119	0.00091
+Dorea longicatena	88431	S	73	83	156	0.00119
+Lachnospira eligens	39485	S	196	2	198	0.00151
+Agathobacter rectalis	39491	S	93	6	99	0.00076
+Jutongia sp. SJQ-6	3445972	S	67	1	68	0.00052
+Hungatella hathewayi	154046	S	47	14	61	0.00047
+Eshraghiella crossota	45851	S	60	2	62	0.00047
+Anaerocolumna sedimenticola	2696063	S	12	6	18	0.00014
+Allocoprococcus comes	410072	S	19	1	20	0.00015
+Hominifimenecus sp. rT4P-3	3242979	S	18	0	18	0.00014
+Claveliimonas bilis	3028070	S	18	0	18	0.00014
+Butyrivibrio fibrisolvens	831	S	10	3	13	0.00010
+[Clostridium] symbiosum	1512	S	15	0	15	0.00011
+Marvinbryantia formatexigens	168384	S	15	0	15	0.00011
+Wansuia hejianensis	2763667	S	10	0	10	0.00008
+Flavonifractor plautii	292800	S	1048	62	1110	0.00847
+Faecalibacterium prausnitzii	853	S	72	454	526	0.00401
+Lawsonibacter asaccharolyticus	2108523	S	49	2	51	0.00039
+Dysosmobacter welbionis	2093857	S	37	103	140	0.00107
+Pseudoflavonifractor gallinarum	2779352	S	22	1	23	0.00018
+Clostridium sp. M62/1	411486	S	426	136	562	0.00429
+Clostridium sp. 10cd*	3373596	S	10	80	90	0.00069
+[Clostridium] innocuum	1522	S	93	98	191	0.00146
+Agathobaculum sp. NTUH-O15-33	3079302	S	79	410	489	0.00373
+Flintibacter sp. KGMB00164	2610895	S	44	1	45	0.00034
+Intestinibacter bartlettii	261299	S	921	58	979	0.00747
+Streptococcus thermophilus	1308	S	6692	1896	8588	0.06551
+Streptococcus salivarius	1304	S	91	237	328	0.00250
+Streptococcus pasteurianus	197614	S	20	224	244	0.00186
+Lacticaseibacillus paracasei	1597	S	380	112	492	0.00375
+Lactobacillus acidophilus	1579	S	141	18	159	0.00121
+Enterococcus avium	33945	S	33	5	38	0.00029
+Enterococcus faecalis	1351	S	19	254	273	0.00208
+Pseudobacillus badius	1455	S	14	27	41	0.00031
+Gemella sanguinis	84135	S	17	2	19	0.00014
+Acidaminococcus intestini	187327	S	8068	407	8475	0.06465
+Veillonella parvula	29466	S	375	92	467	0.00356
+Dialister succinatiphilus	487173	S	30	34	64	0.00049
+Megasphaera coli	1852379	S	40	4	44	0.00034
+Amedibacterium intestinale	2583452	S	164	10	174	0.00133
+Thomasclavelia ramosa	1547	S	49	4	53	0.00040
+Thomasclavelia spiroformis	29348	S	12	1	13	0.00010
+Bifidobacterium longum	216816	S	1097	523	1620	0.01236
+Bifidobacterium breve	1685	S	382	177	559	0.00426
+Bifidobacterium animalis	28025	S	58	951	1009	0.00770
+Cutibacterium acnes	1747	S	653	66	719	0.00548
+Cutibacterium granulosum	33011	S	10	1	11	0.00008
+Micrococcus luteus	1270	S	37	144	181	0.00138
+Kocuria rhizophila	72000	S	40	43	83	0.00063
+Dermacoccus sp. PAMC28757	2762331	S	60	8	68	0.00052
+Dermacoccus nishinomiyaensis	1274	S	19	3	22	0.00017
+Leucobacter chromiireducens	283877	S	16	9	25	0.00019
+Corynebacterium kroppenstedtii	161879	S	10	43	53	0.00040
+Slackia exigua	84109	S	220	207	427	0.00326
+Slackia heliotrinireducens	84110	S	28	7	35	0.00027
+Denitrobacterium detoxificans	79604	S	11	18	29	0.00022
+Bacteroides fragilis	817	S	4183	4174	8357	0.06375
+Bacteroides ovatus	28116	S	830	1850	2680	0.02044
+Bacteroides caecimuris	1796613	S	202	42	244	0.00186
+Bacteroides xylanisolvens	371601	S	103	114	217	0.00166
+Bacteroides luhongzhouii	2650158	S	11	1	12	0.00009
+Bacteroides caccae	47678	S	11	0	11	0.00008
+Phocaeicola vulgatus	821	S	12	8	20	0.00015
+Alistipes onderdonkii	328813	S	3006	244	3250	0.02479
+Sutterella wadsworthensis	40545	S	5765	95	5860	0.04470
+Sutterella faecalis	2584944	S	17	0	17	0.00013
+Delftia acidovorans	80866	S	22	91	113	0.00086
+Comamonas testosteroni	285	S	12	10	22	0.00017
+Herbaspirillum huttiense	863372	S	60	9	69	0.00053
+Enterobacter hormaechei	158836	S	14	285	299	0.00228
+Escherichia coli	562	S	90	3240	3330	0.02540
+Morganella morganii	582	S	13	3	16	0.00012
+Faucicola osloensis	34062	S	20	0	20	0.00015
+Terribium terrae	2725666	S	12	14	26	0.00020
+Paracoccus yeei	147645	S	37	49	86	0.00066
+Paracoccus sanguinis	1545044	S	16	6	22	0.00017
+Bilophila wadsworthia	35833	S	485	6	491	0.00375
+Allomeiothermus silvanus	52022	S	36	0	36	0.00027
+Homo sapiens	9606	S	1825	609	2434	0.01857

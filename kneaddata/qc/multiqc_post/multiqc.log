@@ -1,0 +1,11 @@
+
+/// MultiQC 🔍 v1.33
+
+       file_search | Search path: /scratch/st-ctropini-1/ahong/bfrag4/fastqc_post_kneaddata
+
+            fastqc | Found 238 reports
+
+     write_results | Existing reports found, adding suffix to filenames. Use '--force' to overwrite.
+     write_results | Data        : multiqc_post_kneaddata/multiqc_report_data_1
+     write_results | Report      : multiqc_post_kneaddata/multiqc_report_1.html
+           multiqc | MultiQC complete
