@@ -352,89 +352,100 @@ display: none;
 </div>
 
 
-<div id="outputs-from-samples-directly-from-kvich-et-al.-no-further-pre-processing" class="section level2">
-<h2>Outputs from samples directly from Kvich et al. (no further
-pre-processing)</h2>
-<p>No additional human read removal applied. Reads are already the
-unmapped fraction from the upstream human alignment pipeline (Kvich et
-al.).</p>
-<p><strong>Samples:</strong> 119 (all)<br />
-<strong>Input:</strong>
-<code>../input/{sample}_unmapped_R1/R2.fq</code></p>
-</div>
-<div id="pipeline-summary" class="section level2">
-<h2>Pipeline summary</h2>
-<table>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Step</th>
-<th>Script</th>
-<th>Output</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>1. Align to B. frag + F. nuc</td>
-<td><code>01_align_bwa.sh</code></td>
-<td><code>alignment/bam/</code> (not copied)</td>
-</tr>
-<tr class="even">
-<td>2. Alignment QC</td>
-<td><code>02_flagstat.sh</code></td>
-<td><code>qc/flagstat/</code></td>
-</tr>
-<tr class="odd">
-<td>3. Quantify gene expression</td>
-<td><code>03_featurecounts.sh</code></td>
-<td><code>alignment/counts/counts.txt</code></td>
-</tr>
-<tr class="even">
-<td>3b. Parse gene annotations</td>
-<td><code>03b_make_gene_annotations.py</code></td>
-<td><code>alignment/gene_annotations.tsv</code></td>
-</tr>
-<tr class="odd">
-<td>4. Taxonomic classification</td>
-<td><code>04_kraken2.sh</code></td>
-<td><code>community_composition/kraken2/</code></td>
-</tr>
-<tr class="even">
-<td>5. Abundance estimation</td>
-<td><code>05_bracken.sh</code></td>
-<td><code>community_composition/bracken/</code></td>
-</tr>
-<tr class="odd">
-<td>6. Convert to MetaPhlAn format</td>
-<td><code>06_bracken_to_mpa.py</code></td>
-<td><code>functional_profiling/humann3_mpa/</code></td>
-</tr>
-<tr class="even">
-<td>7. Normalize Bracken counts</td>
-<td><code>07_normalize_bracken.py</code></td>
-<td><code>community_composition/normalized/</code></td>
-</tr>
-<tr class="odd">
-<td>8. Functional profiling</td>
-<td><code>08_humann3.sh</code></td>
-<td><code>functional_profiling/humann3/</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="whats-not-here" class="section level2">
-<h2>What’s not here</h2>
+<div id="bmeg-524-final-project-metatranscriptomic-analysis-of-microbial-reads-from-colorectal-cancer-patient-biopsies" class="section level1">
+<h1>BMEG 524 Final Project: Metatranscriptomic Analysis of Microbial
+Reads from Colorectal Cancer Patient Biopsies</h1>
+<p>Kvich, L. et al. Biofilms and core pathogens shape the tumor
+microenvironment and immune phenotype in colorectal cancer. Gut Microbes
+16, 2350156 (2024). available here: [<a href="https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#d1e667" class="uri">https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#d1e667</a>](<a href="https://www.tandfonline.com/doi/full/10.1080/19490976" class="uri">https://www.tandfonline.com/doi/full/10.1080/19490976</a></p>
+<p>This project re-analyzes low-biomass mucosal biopsy RNA-seq data from
+the colorectal cancer (CRC) study by Kvich et al. to determine whether a
+more standard metatranscriptomic workflow can recover additional
+microbial community and functional insights beyond the original study,
+which primarily focused on the host RNA-seq signal. In this re-analysis,
+Kvich et al.’s microbial RNA-seq workflow is first reproduced to
+validate the published findings. The analysis is then extended with
+additional low-biomass preprocessing, broader taxonomic profiling, and
+community-wide functional pathway analysis to explore whether more
+discovery-oriented workflows can reveal microbial signals that were not
+accessible in the original study.</p>
+<p>D</p>
+<p>The workflow is then extended in three stages:</p>
+<p>Baseline reproduction of the original microbial analysisRaw unmapped
+reads are aligned back to B. fragilis and F. nucleatum references using
+bwa-mem and quantified with featureCounts, while Kraken2/Bracken is used
+for community composition profiling.</p>
+<p>Additional preprocessing for low-biomass optimizationReads undergo an
+extra round of KneadData preprocessing (quality trimming + residual
+human read removal) to test whether low-depth outliers or host carryover
+affect downstream microbial signals.</p>
+<p>Community-wide functional profilingThe retained reads are analyzed
+using Kraken2/Bracken → HUMAnN3 → MaAsLin2 to identify CRC-associated
+microbial pathway shifts, with paired modeling used to account for
+matched tumor and adjacent-normal biopsies.</p>
+<p>This expanded workflow reveals pathway-level microbial differences
+associated with CRC, particularly in amino acid biosynthesis and
+degradation, that were not accessible through the original targeted
+alignment strategy.</p>
+<p>Main goals</p>
+<p>Reproduce the published microbial findings from Kvich et al.</p>
+<p>Benchmark the effect of extra preprocessing in low-biomass biopsy
+data</p>
+<p>Extend the analysis to community-wide taxonomic and functional
+profiling</p>
+<p>Identify CRC-associated microbial pathways using paired statistical
+models</p>
+<p>Compare the strengths of targeted reference mapping vs
+discovery-oriented metatranscriptomic workflows</p>
+<p>Tools used</p>
+<p>bwa-mem</p>
+<p>featureCounts</p>
+<p>samtools / MultiQC / FastQC</p>
+<p>KneadData</p>
+<p>Kraken2 + Bracken</p>
+<p>HUMAnN3</p>
+<p>MaAsLin2</p>
+<p>R (tidyverse, ggplot2, patchwork)</p>
+<p>SLURM / UBC ARC Sockeye HPC</p>
+<p>Key takeaway</p>
+<p>For low-biomass biopsy metatranscriptomics, targeted reference
+alignment remains useful for species-specific hypothesis testing, but
+broader workflows such as Kraken2/Bracken + HUMAnN3 + MaAsLin2 can
+recover additional community-level functional signals that may better
+capture CRC-associated microbial activity.</p>
+<p>This project highlights the tradeoff between species-focused
+validation and community-wide discovery in microbial transcriptomic
+analyses of human tissue samples.</p>
+<pre class="mermaid"><code>flowchart TD
+    A[Raw sequencing data&lt;br/&gt;bcl files] --&gt; B[Demultiplex]
+    B --&gt; C[Cutadapt]
+    C --&gt; D[SortMeRNA]
+    D --&gt; E[bwa-mem&lt;br/&gt;GRCh38.p13]
+
+    E --&gt; F[Human reads]
+    E --&gt; G[Unmapped reads]
+
+    G --&gt; H[Kraken2 / Bracken]
+    H --&gt; I[Scaling factor]
+
+    I --&gt; J[Unscaled counts]
+    I --&gt; K[Scaled counts]
+
+    J --&gt; L[Across-sample comparison]
+    K --&gt; M[Within-sample comparison]
+
+    G --&gt; N[Custom reference genome&lt;br/&gt;Concatenated B. fragilis + F. nucleatum]
+    N --&gt; O[bwa-mem]
+    O --&gt; P[VST]</code></pre>
+<div id="genai-acknowledgement" class="section level2">
+<h2>GenAI Acknowledgement</h2>
 <ul>
-<li><strong>BAMs</strong> — not copied (too large). Located at
-<code>/scratch/st-ctropini-1/ahong/bfrag3/output/bam/</code></li>
-<li><strong>HUMANn3 outputs</strong> — partial (19/119 samples);
-remainder at
-<code>/scratch/st-ctropini-1/ahong/bfrag3/output/humann3/</code></li>
+<li>OpenAI. (2026). ChatGPT (April 13 version) [Large language model].
+<a href="https://chatgpt.com/" class="uri">https://chatgpt.com/</a></li>
+<li>Anthropic. (2026). Claude Code (April 13 version) [Large language
+model]. <a href="https://claude.ai/" class="uri">https://claude.ai/</a></li>
 </ul>
+</div>
 </div>
 
 
