@@ -69,8 +69,6 @@ There are three biological groups:
 | Paired normal | La__ samples | Paired normal tissue from the same CRC patients |
 | Healthy control | Lasse__ samples | Mucosal biopsies from healthy individuals |
 
-**Sample naming:** `Lasse4--Lasse33` in file names correspond to `La4--La33` in clinical metadata (same samples, different naming convention). `La125` is a sequencing control absent from the metadata and is excluded from all analyses. All R scripts remap names with `str_replace("^Lasse(\\d+)$", "La\\1")`.
-
 All sample names are listed in `samples_all.txt` (119 samples). After KneadData filtering (Part 2), the 86 retained samples are listed in `samples_filtered.txt`.
 
 # Computational Environment
@@ -125,7 +123,7 @@ Chromosome assignments in the combined reference:
 | `NZ_CP069563.1` | *Bacteroides fragilis* (locus tag prefix `I6J55_RS`) |
 | `NZ_CP028101.1` | *Fusobacterium nucleatum* (locus tag prefix `C7Y58_RS`) |
 
-## 1.2 Alignment to bacterial references (script: `01_align_bwa.sh`)
+## 1.2 Alignment to bacterial references (script: 01_align_bwa.sh)
 
 Paired-end reads from all 119 samples were aligned to the combined reference with bwa-mem v0.7.19. SLURM array: 119 tasks, 8 CPUs, 64 GB RAM, 24 h.
 
@@ -143,7 +141,7 @@ samtools index output/bam/{sample}.bam
 
 BAMs are on the server only (`/scratch/st-ctropini-1/ahong/bfrag3/output/bam/`) and are not included in this repository due to file size.
 
-## 1.3 Alignment QC (script: `02_flagstat.sh`)
+## 1.3 Alignment QC (script: 02_flagstat.sh)
 
 `samtools flagstat` was run per sample; results were aggregated into a MultiQC report. SLURM array: 119 tasks, 2 CPUs, 8 GB RAM, 1 h.
 
@@ -160,17 +158,17 @@ multiqc output/qc/flagstat \
     --filename bwa_alignment_qc
 ```
 
-Per-sample flagstat files: `no_kneaddata/qc/flagstat/` (119 files).
-MultiQC report: `no_kneaddata/qc/multiqc/bwa_alignment_qc.html`.
-
-![samtools-flagstat-pct-table](no_kneaddata/qc/multiqc/samtools-flagstat-pct-table.png)
-
-- The report shows that mapping rate to the combined B. fragilis + F. nucleatum reference is very low, 
-as expected by mapping all unmapped reads to just two species. However, some samples (La70 13.8%, La122 12.95, La110 10.64) showed a high percentage. These were also high depth (large number of reads) samples.
-- Mean mapping rate is around 2.8%. From the violin plot look appears to be (similar), showing that most mapped pairs do pair properly
+Per-sample flagstat files: `no_kneaddata/qc/flagstat/` (119 files).   
+MultiQC report: `no_kneaddata/qc/multiqc/bwa_alignment_qc.html`.    
 
 
-## 1.4 Gene expression quantification (script: `03_featurecounts.sh`)
+![](no_kneaddata/qc/multiqc/samtools-flagstat-pct-table.png)   
+
+**Figure1.** Samtools flagstat alignment summary    
+
+Mapping of the non-human read fraction to the combined B. fragilis + F. nucleatum reference was generally low, which is expected given that all reads were aligned to only two bacterial species. Most samples showed minimal alignment, with a mean mapping rate of approximately 2.8%. However, a small subset of high-depth samples showed notably higher mapping rates, including La70 (13.8%), La122 (12.95%), and La110 (10.64%). These samples also had among the highest total non-human read counts. Because these values represent percentages rather than absolute read counts, their enrichment in some of the highest-depth libraries may suggest sample-specific biological dominance by these species or, alternatively, technical artifacts affecting the unusually deep samples. The flagstat summary additionally showed that the majority of mapped reads were properly paired, indicating that the alignments were structurally consistent despite the overall low mapping fraction.
+
+## 1.4 Gene expression quantification (script: 03_featurecounts.sh)
 
 featureCounts quantified per-gene read counts across all 119 BAMs simultaneously. Single SLURM job: 8 CPUs, 32 GB RAM, 24 h.
 
@@ -188,7 +186,7 @@ Key flags: `-p` paired-end; `-B` requires both mates to map; `-C` discards chime
 
 Output: `no_kneaddata/alignment/counts/counts.txt` -- gene x sample raw read count matrix.
 
-## 1.5 Gene annotations (script: `03b_make_gene_annotations.py`)
+## 1.5 Gene annotations (script: 03b_make_gene_annotations.py)
 
 A gene annotation table was generated from the combined GTF by irst collecting `product` descriptions from `CDS` feature lines into a `gene_id -> product` dictionary, then joining to each `gene` feature line. This is required because `product` is a CDS-level attribute in NCBI bacterial GTFs, not a gene-level attribute.
 
@@ -200,7 +198,7 @@ python scripts/no_kneaddata/03b_make_gene_annotations.py \
 
 Output: `no_kneaddata/alignment/gene_annotations.tsv` -- columns: `gene_id`, `gene` (short name), `product`.
 
-## 1.6 Taxonomic profiling -- Kraken2 (script: `04_kraken2.sh`)
+## 1.6 Taxonomic profiling with Kraken2 (script: 04_kraken2.sh)
 
 Kraken2 was run on the raw unmapped reads with `--confidence 0.05`, as recommended by Pereira-Marques et al. for low-biomass samples. 
 SLURM array: 119 tasks, 8 CPUs, 100 GB RAM, 24 h. Classified reads discarded (`--output /dev/null`) to save disk space.
@@ -216,7 +214,7 @@ kraken2 \
 
 Output: `no_kneaddata/community_composition/kraken2/{sample}.report` (119 files).
 
-## 1.7 Abundance estimation -- Bracken (script: `05_bracken.sh`)
+## 1.7 Abundance estimation with Bracken (script: 05_bracken.sh)
 
 Bracken redistributes reads assigned to higher taxonomic levels back to species. SLURM array: 119 tasks, 4 CPUs, 16 GB RAM, 4 h.
 
@@ -231,7 +229,7 @@ bracken \
 
 Output: `no_kneaddata/community_composition/bracken/` -- 238 files (`.bracken` + `_bracken.report`, 2 per sample).
 
-## 1.8 Normalize Bracken counts (script: `07_normalize_bracken.py`)
+## 1.8 Normalize Bracken counts (script: 07_normalize_bracken.py)
 
 Species-level counts were normalized following Kvich et al.:
 
@@ -241,7 +239,6 @@ Species-level counts were normalized following Kvich et al.:
 4. Taxa with `log10(scaled_count + 1) < 0.9` in all samples removed (~8 reads; from Kvich et al. Figure S1)
 
 ```bash
-conda activate kraken_env
 python scripts/no_kneaddata/07_normalize_bracken.py
 ```
 
@@ -249,7 +246,10 @@ Output in `no_kneaddata/community_composition/normalized/`: `counts_unscaled.tsv
 
 ## 1.9 Results: Community composition and gene expression
 
-Community composition results are shown for both the raw reads (119 samples, reproducing Kvich et al.) and KneadData-cleaned reads (86 samples) side-by-side. Gene expression results (Table S2, Figure 2J) are based on BWA alignment and featureCounts, which were applied to the raw reads only.
+Community composition results are shown for the raw reads here, reproducing Kvich et al.'s analysis. 
+
+- Gene expression results were used for Figure 2 (Figure S6 in paper), and table 4 (Table S2 in apepr). As a reminder, these are from BWA alignment and featureCounts, which were applied to the raw reads
+- Abundance data from Kraken2/Bracken was used to plot FIgure 3 (Figure 2J in paper), and Figure 4 (Also Figure 4 in paper)
 
 ```{r load-data}
 BFRAG_CHR  <- "NZ_CP069563.1"
@@ -262,16 +262,13 @@ meta <- read.delim("meta.tsv") %>%
 paired_meta <- meta %>% filter(type %in% c("Paired", "CRC"))
 
 # Function to fix inconsistent naming (Lasse to La)
-rename_lasse <- function(df) {
-  colnames(df) <- colnames(df) %>% str_replace("^Lasse(\\d+)$", "La\\1")
-  df
-}
+rename_lasse <- function(df) {colnames(df) <- colnames(df) %>% str_replace("^Lasse(\\d+)$", "La\\1")
+  df}
 
 # Flagstat contains total fragments per sample (read1 line)
 parse_flagstat <- function(file) {
   lines <- readLines(file)
-  data.frame(sample = tools::file_path_sans_ext(basename(file)),
-             total_fragments = as.numeric(str_extract(grep("read1", lines, value = TRUE)[1], "^\\d+")))}
+  data.frame(sample = tools::file_path_sans_ext(basename(file)), total_fragments = as.numeric(str_extract(grep("read1", lines, value = TRUE)[1], "^\\d+")))}
 
 flagstat_df <- list.files("no_kneaddata/qc/flagstat", pattern = "\\.flagstat$", full.names = TRUE) %>%
   map_dfr(parse_flagstat) %>%
@@ -312,32 +309,34 @@ sf_df_kd <- read.delim("kneaddata/community_composition/normalized/scaling_facto
 ```
 
 ```{r shared-prep}
+# Format p-values for plot annotations
 fmt_p <- function(p) ifelse(p < 0.001, sprintf("p = %.2e", p), sprintf("p = %.4f", p))
+# Ensure sample groups always appear in the same order in plots
 to_factor <- function(df) mutate(df, type = factor(type, levels = type_levels))
 
+# Raw reads version (n = 119)
+# Total bacterial scaled counts per sample
 total_per_sample <- colSums(counts_scaled)
-
+# Make a plotting dataframe for total bacterial abundance per sample and attach sample metadata (CRC/Healthy/Paired)
 total_df <- enframe(total_per_sample, name = "sample", value = "total_scaled") %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type))
-
+# Calculate alpha diversity (Shannon index) for each sample using unscaled counts, then attach metadata
 shannon_df <- diversity(t(counts_unscaled), index = "shannon") %>%
   enframe(name = "sample", value = "shannon") %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type))
-
+# Sum all species whose names start with "Fusobacterium " to get total Fusobacterium counts per sample
 fuso_phylum_df <- colSums(counts_scaled[grepl("^Fusobacterium ", rownames(counts_scaled)), ]) %>%
   enframe(name = "sample", value = "fusobacteria") %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type))
-
+# Extract scaled counts for B. fragilis and F. nucleatum only, then calculate their relative abundance within each sample
 species_df <- data.frame(
-  sample                    = colnames(counts_scaled),
-  `Bacteroides fragilis`    = as.numeric(counts_scaled["Bacteroides fragilis", ]),
+  sample = colnames(counts_scaled),
+  `Bacteroides fragilis` = as.numeric(counts_scaled["Bacteroides fragilis", ]),
   `Fusobacterium nucleatum` = as.numeric(counts_scaled["Fusobacterium nucleatum", ]),
-  check.names = FALSE
-) %>%
+  check.names = FALSE) %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type)) %>%
-  mutate(bfrag_rel = `Bacteroides fragilis`    / total_per_sample[sample],
-         fnuc_rel  = `Fusobacterium nucleatum` / total_per_sample[sample])
-
+  mutate(bfrag_rel = `Bacteroides fragilis`    / total_per_sample[sample], fnuc_rel  = `Fusobacterium nucleatum` / total_per_sample[sample])
+# Convert the species-relative-abundance dataframe to long format for plotting and create a combined factor that controls x-axis order in the final panel
 rel_long <- species_df %>%
   select(sample, type, bfrag_rel, fnuc_rel) %>%
   pivot_longer(c(bfrag_rel, fnuc_rel), names_to = "species", values_to = "rel") %>%
@@ -348,29 +347,28 @@ rel_long <- species_df %>%
            "F. nucleatum\nCRC", "F. nucleatum\nHealthy", "F. nucleatum\nPaired")))
 
 # KneadData versions (86 samples)
+# Total bacterial scaled counts per sample after KneadData
 total_per_sample_kd <- colSums(counts_scaled_kd)
-
+# Plotting dataframe for total bacterial abundance after KneadData
 total_df_kd <- enframe(total_per_sample_kd, name = "sample", value = "total_scaled") %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type))
-
+# Shannon diversity per sample after KneadData
 shannon_df_kd <- diversity(t(counts_unscaled_kd), index = "shannon") %>%
   enframe(name = "sample", value = "shannon") %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type))
-
+# Total Fusobacterium counts per sample after KneadData
 fuso_phylum_df_kd <- colSums(counts_scaled_kd[grepl("^Fusobacterium ", rownames(counts_scaled_kd)), ]) %>%
   enframe(name = "sample", value = "fusobacteria") %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type))
-
+# Extract B. fragilis and F. nucleatum scaled counts after KneadData and calculate their relative abundance within each sample
 species_df_kd <- data.frame(
-  sample                    = colnames(counts_scaled_kd),
-  `Bacteroides fragilis`    = as.numeric(counts_scaled_kd["Bacteroides fragilis", ]),
+  sample = colnames(counts_scaled_kd),
+  `Bacteroides fragilis` = as.numeric(counts_scaled_kd["Bacteroides fragilis", ]),
   `Fusobacterium nucleatum` = as.numeric(counts_scaled_kd["Fusobacterium nucleatum", ]),
-  check.names = FALSE
-) %>%
+  check.names = FALSE) %>%
   left_join(meta, by = "sample") %>% filter(!is.na(type)) %>%
-  mutate(bfrag_rel = `Bacteroides fragilis`    / total_per_sample_kd[sample],
-         fnuc_rel  = `Fusobacterium nucleatum` / total_per_sample_kd[sample])
-
+  mutate(bfrag_rel = `Bacteroides fragilis` / total_per_sample_kd[sample], fnuc_rel  = `Fusobacterium nucleatum` / total_per_sample_kd[sample])
+# Long-format version for plotting relative abundance after KneadData
 rel_long_kd <- species_df_kd %>%
   select(sample, type, bfrag_rel, fnuc_rel) %>%
   pivot_longer(c(bfrag_rel, fnuc_rel), names_to = "species", values_to = "rel") %>%
@@ -381,19 +379,16 @@ rel_long_kd <- species_df_kd %>%
            "F. nucleatum\nCRC", "F. nucleatum\nHealthy", "F. nucleatum\nPaired")))
 ```
 
-### Figure S6 -- Non-human read mapping per sample
+### Figure S6 recreation - Non-human read mapping per sample
+
+Figure S6 was recreated to visualize how much of each sample’s non-human read fraction could be assigned to the two-species reference (B. fragilis + F. nucleatum) and to justify the >1M read threshold used for downstream gene-level analyses. This helps identify the subset of high-depth samples in which the two target species contribute a substantial fraction of the non-human read pool.
 
 ```{r fig-s6, fig.width=14, fig.height=5}
-fill_scale <- scale_fill_manual(
-  name   = "Mapping",
-  values = c("B. fragilis" = "#A0522D", "F. nucleatum" = "#1B6CA8", "Unmapped" = "#BEBEBE")
-)
+fill_scale <- scale_fill_manual(name   = "Mapping", values = c("B. fragilis" = "#A0522D", "F. nucleatum" = "#1B6CA8", "Unmapped" = "#BEBEBE"))
 
-sort_by_total <- function(df) {
-  order <- df %>% group_by(sample) %>%
+sort_by_total <- function(df) {order <- df %>% group_by(sample) %>%
     summarise(t = sum(reads_M), .groups = "drop") %>% arrange(t) %>% pull(sample)
-  mutate(df, sample = factor(sample, levels = order))
-}
+  mutate(df, sample = factor(sample, levels = order))}
 
 reads_long <- reads_df %>%
   left_join(meta %>% select(sample, type), by = "sample") %>% filter(!is.na(type)) %>%
@@ -416,71 +411,70 @@ p_s6b <- reads_long %>% group_by(sample) %>% filter(sum(reads_M) > 1) %>% ungrou
   labs(x = "Sample", y = "Non-Human Reads (M)", title = "B  Samples with >1M reads") +
   theme_classic() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p_s6a + p_s6b + plot_layout(guides = "collect") +
-  plot_annotation(title = "Figure S6 -- Non-human read mapping per sample")
+p_s6a + p_s6b + plot_layout(guides = "collect")
 ```
+**Figure 2.** Bacterial gene expression in CRC samples. 
 
-### Table S2 -- Top 20 expressed genes per organism (CRC samples, >=1M reads)
+(A) Stacked bar plot of all 119 samples showing reads mapped to B. fragilis, F. nucleatum, and unmapped reads, sorted by total depth. Dashed line indicates 1M reads. (B) Subset of samples exceeding 1M total non-human reads. Read depth distribution and mapping proportions are consistent with those reported by the original authors, confirming that our pipeline reproduces their baseline results.
 
-From Kvich et al. supplemental methods: reads normalized with DESeq2 variance-stabilizing transformation (VST); cutoff of 1M reads applied; expression averaged across passing samples; only protein-coding genes with a named product included.
+### Table S2 recreation -Top 20 expressed genes per organism (CRC samples, >=1M reads)
+
+The goal of recreating Table S2 was to validate that the reproduced alignment and gene-counting workflow recovered the same dominant species-specific expression patterns reported by Kvich et al. Using the original supplemental criteria, CRC samples with >=1M non-human reads were retained, gene counts were normalized with DESeq2 variance-stabilizing transformation (VST), expression was averaged across passing samples, and only protein-coding genes with annotated products were included in the final ranked table.
 
 ```{r table-s2, results='asis'}
-gene_annot <- read.delim("no_kneaddata/alignment/gene_annotations.tsv") %>%
-  filter(product != "")
-
+# Load gene annotation table and remove genes without a named product
+gene_annot <- read.delim("no_kneaddata/alignment/gene_annotations.tsv") %>% filter(product != "")
+# Identify CRC samples with at least 1 million total fragments, matching the filtering criterion described by Kvich et al.
 crc_1M <- reads_df %>%
   left_join(meta %>% select(sample, type), by = "sample") %>%
   filter(type == "CRC", total_fragments >= 1e6) %>% pull(sample)
-
+# Build a count matrix containing only passing CRC samples (Rows = genes, columns = samples)
 counts_mat <- counts_raw %>%
   column_to_rownames("Geneid") %>%
   select(all_of(sample_cols)) %>%
   select(any_of(crc_1M)) %>%
   mutate(across(everything(), as.integer))
+# Minimal DESeq2 sample metadata required for VST normalization
 coldata <- data.frame(row.names = colnames(counts_mat), sample = colnames(counts_mat))
-
-run_vst <- function(gene_ids) {
-  mat <- counts_mat[rownames(counts_mat) %in% gene_ids, ]
-  mat <- mat[rowSums(mat) > 0, ]
-  dds <- DESeqDataSetFromMatrix(mat, colData = coldata, design = ~ 1)
-  rowMeans(assay(varianceStabilizingTransformation(dds, blind = TRUE)))
-}
-
-bfrag_avg <- run_vst(counts_raw %>% filter(Chr == BFRAG_CHR) %>% pull(Geneid))
+# Function to compute mean variance-stabilized expression for a given set of gene IDs across CRC samples
+run_vst <- function(gene_ids) {mat <- counts_mat[rownames(counts_mat) %in% gene_ids, ]  # subset to genes from one organism
+  mat <- mat[rowSums(mat) > 0, ] # remove genes with zero counts across all samples
+  dds <- DESeqDataSetFromMatrix(mat, colData = coldata, design = ~ 1)  # apply DESeq2 variance stabilizing transformation
+  rowMeans(assay(varianceStabilizingTransformation(dds, blind = TRUE)))} # return average VST expression across samples
+bfrag_avg <- run_vst(counts_raw %>% filter(Chr == BFRAG_CHR) %>% pull(Geneid)) # Compute average VST-normalized expression separately for B. fragilis and F. nucleatum genes
 fnuc_avg  <- run_vst(counts_raw %>% filter(Chr == FNUC_CHR)  %>% pull(Geneid))
-
-make_top20 <- function(avg_expr, species_label) {
-  data.frame(gene_id = names(avg_expr), avg_vst = avg_expr) %>%
+# Function to convert average expression values into a ranked top-20 table
+make_top20 <- function(avg_expr, species_label) {data.frame(gene_id = names(avg_expr), avg_vst = avg_expr) %>%
     inner_join(gene_annot, by = "gene_id") %>%
     arrange(desc(avg_vst)) %>% slice_head(n = 20) %>%
-    transmute(Species = species_label, Gene = gene, Product = product, Avg_VST = round(avg_vst, 2))
-}
-
-table_s2 <- bind_rows(make_top20(bfrag_avg, "B. fragilis"),
-                       make_top20(fnuc_avg,  "F. nucleatum"))
-knitr::kable(table_s2, caption = "Table S2 -- Top 20 expressed genes per organism in CRC samples with >=1M reads.")
+    transmute(Species = species_label, Gene = gene, Product = product, Avg_VST = round(avg_vst, 2))}
+# Combine the top 20 expressed genes from both organisms
+table_s2 <- bind_rows(make_top20(bfrag_avg, "B. fragilis"), make_top20(fnuc_avg,  "F. nucleatum"))
+knitr::kable(table_s2, caption = "Top 20 expressed genes per organism in CRC samples with >=1M reads.")
 ```
 
-### Figure 2J - Virulence gene expression vs F. nucleatum abundance
+The reproduced top expressed genes were highly similar to those reported in the original study, with both species dominated by conserved housekeeping and central metabolic genes.
 
-fomA and radD are the two F. nucleatum virulence genes unambiguously annotated in GCF_016889925.1; featureCounts CDS counts are used in place of the authors' custom alignment.
+### Figure 2J recreation - Virulence gene expression vs F. nucleatum abundance
 
-```{r fig-2j, fig.width=8, fig.height=4}
+The goal of recreating Figure 2J was to validate that the reproduced workflow captured the published relationship between F. nucleatum abundance and expression of the virulence-associated genes fomA and radD. This serves as a gene-level reproduction check that links species abundance estimates from Bracken with featureCounts-derived expression values from the same samples.
+
+```{r fig-2j, fig.width=5, fig.height=2.2}
 FOMA_ID <- "C7Y58_RS03545"
 RADD_ID <- "C7Y58_RS00155"
-
+# Extract raw featureCounts counts for fomA and radD across all samples, convert to long format, and apply the same sequencing-depth scaling used for Bracken abundance estimates
 vir_counts <- counts_raw %>%
   filter(Geneid %in% c(FOMA_ID, RADD_ID)) %>%
   select(Geneid, all_of(sample_cols)) %>%
   pivot_longer(-Geneid, names_to = "sample", values_to = "raw_count") %>%
   left_join(sf_df %>% select(sample, scaling_factor), by = "sample") %>%
-  mutate(scaled_count = raw_count * scaling_factor,
-         gene = case_when(Geneid == FOMA_ID ~ "fomA", Geneid == RADD_ID ~ "radD"))
-
+  mutate(scaled_count = raw_count * scaling_factor, gene = case_when(Geneid == FOMA_ID ~ "fomA", Geneid == RADD_ID ~ "radD"))
+# Extract F. nucleatum abundance from the scaled Bracken table
 fnuc_row <- which(rownames(counts_scaled) == "Fusobacterium nucleatum")
-fnuc_abund <- tibble(sample = colnames(counts_scaled),
-                     fnuc_scaled = as.numeric(counts_scaled[fnuc_row, ]))
-
+fnuc_abund <- tibble(sample = colnames(counts_scaled), fnuc_scaled = as.numeric(counts_scaled[fnuc_row, ]))
+# Combine virulence gene expression, F. nucleatum abundance, and sample metadata
+# Keep only samples with known group labels and non-missing abundance values
+# Label the top 5% highest-F. nucleatum samples on the plot
 plot_df <- vir_counts %>%
   left_join(fnuc_abund, by = "sample") %>%
   left_join(meta %>% select(sample, type), by = "sample") %>%
@@ -488,288 +482,138 @@ plot_df <- vir_counts %>%
   group_by(gene) %>%
   mutate(label = ifelse(fnuc_scaled > quantile(fnuc_scaled, 0.95), sample, NA_character_)) %>%
   ungroup()
-
+# Plot expression of fomA and radD against total F. nucleatum abundance
+# Each point is one sample, coloured by sample group
 ggplot(plot_df, aes(x = fnuc_scaled, y = scaled_count, colour = type)) +
   geom_point(alpha = 0.7, size = 2) +
-  geom_text_repel(aes(label = label), size = 2.5, max.overlaps = 20, show.legend = FALSE) +
+  geom_text_repel(aes(label = label), size = .5, max.overlaps = 20, show.legend = FALSE) +
   facet_wrap(~ gene, scales = "free_y") +
-  scale_colour_manual(values = c("CRC" = "#E41A1C", "Healthy" = "#4DAF4A", "Paired" = "#377EB8"),
-                      name = "Sample type") +
-  labs(x = "F. nucleatum abundance (Bracken scaled counts)",
-       y = "Virulence gene expression\n(featureCounts scaled counts)",
-       title = "Figure 2J -- fomA and radD vs F. nucleatum abundance") +
-  theme_classic()
+  scale_colour_manual(values = c("CRC" = "#E41A1C", "Healthy" = "#4DAF4A", "Paired" = "#377EB8"),name = "Sample type") +
+  labs(x = "F. nucleatum abundance (Bracken scaled counts)", y = "Virulence gene expression\n(featureCounts scaled counts)") +
+  theme_classic() +
+  theme(axis.title = element_text(size = 7),
+  axis.text = element_text(size = 7),
+  strip.text = element_text(size = 7),
+  legend.title = element_text(size = 7),
+  legend.text = element_text(size = 7))
 ```
 
-- These three plots match the results reported by Kvich et al. for the gene expression analysis.
+**Figure 3.** fomA and radD vs F. nucleatum abundance. 
 
-### Figure 4 - Community composition by sample group
+Both fomA and radD expression increased in samples with high F. nucleatum abundance, with a small number of CRC samples driving most of the signal. This is similar to the original Figure 2J.
 
-Two implementations are shown: the authors' original approach and a methodologically improved version. Key differences are summarised in the table below.
+### Figure 4 recreation - Community composition by sample group
 
-```{r fig4-pvals}
-prep_paired <- function(df, value_col) {
-  df %>%
-    filter(type %in% c("CRC", "Paired"), patient_ID != 54) %>%
-    group_by(patient_ID) %>% filter(n() == 2) %>% ungroup() %>%
-    arrange(patient_ID, type) %>% select(patient_ID, type, all_of(value_col))
-}
-
-# Authors' p-values (one-sided, row-order pairing, Bonferroni across all comparisons per panel)
-pA <- p.adjust(c(
-  total_df %>% filter(type %in% c("CRC","Healthy")) %>%
-    wilcox_test(total_scaled ~ type, alternative = "greater") %>% pull(p),
-  prep_paired(total_df, "total_scaled") %>%
-    wilcox_test(total_scaled ~ type, paired = TRUE, alternative = "greater") %>% pull(p)
-))
-pB <- p.adjust(c(
-  shannon_df %>% filter(type %in% c("CRC","Healthy")) %>%
-    t_test(shannon ~ type, alternative = "greater") %>% pull(p),
-  shannon_df %>% filter(type %in% c("Paired","Healthy")) %>%
-    t_test(shannon ~ type, alternative = "greater") %>% pull(p),
-  prep_paired(shannon_df, "shannon") %>%
-    t_test(shannon ~ type, paired = TRUE, alternative = "greater") %>% pull(p)
-))
-pC <- p.adjust(c(
-  fuso_phylum_df %>% filter(type %in% c("CRC","Healthy")) %>%
-    wilcox_test(fusobacteria ~ type) %>% pull(p),
-  prep_paired(fuso_phylum_df, "fusobacteria") %>%
-    wilcox_test(fusobacteria ~ type, paired = TRUE) %>% pull(p)
-))
-pD <- p.adjust(c(
-  species_df %>% filter(type %in% c("CRC","Healthy")) %>%
-    wilcox_test(fnuc_rel ~ type, alternative = "greater") %>% pull(p),
-  prep_paired(species_df, "fnuc_rel") %>%
-    wilcox_test(fnuc_rel ~ type, paired = TRUE, alternative = "greater") %>% pull(p),
-  species_df %>% filter(type %in% c("CRC","Healthy")) %>%
-    wilcox_test(bfrag_rel ~ type, alternative = "greater") %>% pull(p),
-  prep_paired(species_df, "bfrag_rel") %>%
-    wilcox_test(bfrag_rel ~ type, paired = TRUE, alternative = "greater") %>% pull(p)
-))
-
-# Improved p-values (two-sided, patient_ID join pairing, Bonferroni per panel)
-paired_w2 <- function(df, col) {
-  df %>% filter(type %in% c("CRC","Paired")) %>%
+```{r fig4-plots, echo=FALSE, fig.width=5, fig.height=5.5, warning=FALSE, message=FALSE}
+# Helper functions for two-sided CRC vs Healthy and paired CRC vs Paired testing
+paired_w2 <- function(df, col) {df %>%
+    filter(type %in% c("CRC", "Paired")) %>%
     select(patient_ID, type, all_of(col)) %>%
-    pivot_wider(names_from = type, values_from = all_of(col)) %>% drop_na() %>%
-    summarise(p = wilcox.test(CRC, Paired, paired = TRUE)$p.value) %>% pull(p)
-}
-paired_t2 <- function(df, col) {
-  df %>% filter(type %in% c("CRC","Paired")) %>%
+    pivot_wider(names_from = type, values_from = all_of(col)) %>%
+    drop_na() %>%
+    summarise(p = wilcox.test(CRC, Paired, paired = TRUE)$p.value) %>%
+    pull(p)}
+
+paired_t2 <- function(df, col) {df %>%
+    filter(type %in% c("CRC", "Paired")) %>%
     select(patient_ID, type, all_of(col)) %>%
-    pivot_wider(names_from = type, values_from = all_of(col)) %>% drop_na() %>%
-    summarise(p = t.test(CRC, Paired, paired = TRUE)$p.value) %>% pull(p)
-}
-ind_w2 <- function(df, col) wilcox.test(df[[col]][df$type=="CRC"], df[[col]][df$type=="Healthy"])$p.value
-ind_t2 <- function(df, col)    t.test(df[[col]][df$type=="CRC"], df[[col]][df$type=="Healthy"])$p.value
+    pivot_wider(names_from = type, values_from = all_of(col)) %>%
+    drop_na() %>%
+    summarise(p = t.test(CRC, Paired, paired = TRUE)$p.value) %>%
+    pull(p)}
 
-qA <- p.adjust(c(ind_w2(total_df, "total_scaled"),       paired_w2(total_df, "total_scaled")))
-qB <- p.adjust(c(ind_t2(shannon_df, "shannon"),            paired_t2(shannon_df, "shannon")))
-qC <- p.adjust(c(ind_w2(fuso_phylum_df, "fusobacteria"),   paired_w2(fuso_phylum_df, "fusobacteria")))
-qD_b <- p.adjust(c(ind_w2(species_df, "bfrag_rel"),        paired_w2(species_df, "bfrag_rel")))
-qD_f <- p.adjust(c(ind_w2(species_df, "fnuc_rel"),         paired_w2(species_df, "fnuc_rel")))
+ind_w2 <- function(df, col) {wilcox.test(
+    df[[col]][df$type == "CRC"],
+    df[[col]][df$type == "Healthy"])$p.value}
 
-# KneadData p-values (improved methodology)
-qA_kd   <- p.adjust(c(ind_w2(total_df_kd, "total_scaled"),      paired_w2(total_df_kd, "total_scaled")))
-qB_kd   <- p.adjust(c(ind_t2(shannon_df_kd, "shannon"),          paired_t2(shannon_df_kd, "shannon")))
-qC_kd   <- p.adjust(c(ind_w2(fuso_phylum_df_kd, "fusobacteria"), paired_w2(fuso_phylum_df_kd, "fusobacteria")))
-qD_b_kd <- p.adjust(c(ind_w2(species_df_kd, "bfrag_rel"),        paired_w2(species_df_kd, "bfrag_rel")))
-qD_f_kd <- p.adjust(c(ind_w2(species_df_kd, "fnuc_rel"),         paired_w2(species_df_kd, "fnuc_rel")))
+ind_t2 <- function(df, col) {t.test(
+    df[[col]][df$type == "CRC"],
+    df[[col]][df$type == "Healthy"])$p.value}
 
-# Convert to factor after all stat tests
-total_df       <- to_factor(total_df);       total_df_kd       <- to_factor(total_df_kd)
-shannon_df     <- to_factor(shannon_df);     shannon_df_kd     <- to_factor(shannon_df_kd)
-fuso_phylum_df <- to_factor(fuso_phylum_df); fuso_phylum_df_kd <- to_factor(fuso_phylum_df_kd)
-species_df     <- to_factor(species_df);     species_df_kd     <- to_factor(species_df_kd)
-rel_long       <- mutate(rel_long,    type = factor(type, levels = type_levels))
-rel_long_kd    <- mutate(rel_long_kd, type = factor(type, levels = type_levels))
-```
+# Calculate panel-wise adjusted p-values for one dataset
+calc_fig4_stats <- function(total, shannon, fuso, species) {
+  list(
+    qA   = p.adjust(c(ind_w2(total,   "total_scaled"), paired_w2(total,   "total_scaled"))),
+    qB   = p.adjust(c(ind_t2(shannon, "shannon"),      paired_t2(shannon, "shannon"))),
+    qC   = p.adjust(c(ind_w2(fuso,    "fusobacteria"), paired_w2(fuso,    "fusobacteria"))),
+    qD_b = p.adjust(c(ind_w2(species, "bfrag_rel"),    paired_w2(species, "bfrag_rel"))),
+    qD_f = p.adjust(c(ind_w2(species, "fnuc_rel"),     paired_w2(species, "fnuc_rel"))))}
 
-Reproduction of the authors' Figure 4 (one-sided tests, geom_sina, row-order pairing as in the original):
+# Enforce consistent group ordering for both datasets
+total_df       <- to_factor(total_df)
+shannon_df     <- to_factor(shannon_df)
+fuso_phylum_df <- to_factor(fuso_phylum_df)
+species_df     <- to_factor(species_df)
+rel_long       <- mutate(rel_long, type = factor(type, levels = type_levels))
 
-```{r fig4-authors, fig.width=12, fig.height=9}
-pa_A <- ggplot(total_df, aes(x = type, y = total_scaled / 1e6)) +
-  geom_boxplot(width = 0.4, color = "grey40", outlier.shape = NA) +
-  geom_sina(color = "grey30", size = 1.5, maxwidth = 0.5, alpha = 0.8) +
-  geom_signif(comparisons = list(c("CRC","Healthy"), c("CRC","Paired")),
-              annotations = fmt_p(pA), step_increase = 0.12, tip_length = 0.02, textsize = 3) +
-  ylim(0, max(total_df$total_scaled/1e6) * 1.3) +
-  labs(x = NULL, y = "Scaled Counts (x10^6)",
-       title = "A  Scaled counts assigned to\nBacteria superkingdom") + theme_bw()
-pa_B <- ggplot(shannon_df, aes(x = type, y = shannon)) +
-  geom_boxplot(outlier.shape = NA) + geom_jitter(position = position_jitter(0.1)) +
-  geom_signif(comparisons = list(c("CRC","Healthy"), c("CRC","Paired"), c("Healthy","Paired")),
-              annotations = fmt_p(pB), step_increase = 0.1, tip_length = 0.02, textsize = 3) +
-  ylim(0, max(shannon_df$shannon) * 1.35) +
-  labs(x = NULL, y = "Shannon Index", title = "B  Alpha Diversity") + theme_bw()
-pa_C <- ggplot(fuso_phylum_df, aes(x = type, y = fusobacteria)) +
-  geom_jitter(position = position_jitter(0.1)) +
-  geom_signif(comparisons = list(c("CRC","Healthy"), c("CRC","Paired")),
-              annotations = fmt_p(pC), step_increase = 0.12, tip_length = 0.02, textsize = 3) +
-  ylim(0, max(fuso_phylum_df$fusobacteria) * 1.3) +
-  labs(x = NULL, y = "Scaled Counts", title = "C  Fusobacteria Counts") + theme_bw()
-pa_D <- ggplot(rel_long, aes(x = group, y = rel)) +
-  geom_boxplot(outlier.shape = NA) + geom_jitter(width = 0.2, size = 0.8) +
-  geom_signif(comparisons = list(c("B. fragilis\nCRC","B. fragilis\nHealthy"),
-                                  c("F. nucleatum\nCRC","F. nucleatum\nHealthy")),
-              annotations = fmt_p(pD[c(3,1)]),
-              step_increase = 0.1, tip_length = 0.02, textsize = 3) +
-  labs(x = NULL, y = "Relative abundance",
-       title = "D  B. fragilis and F. nucleatum\nrelative abundance") +
-  theme_bw() + theme(axis.text.x = element_text(size = 8))
-(pa_A | pa_B) / (pa_C | pa_D) +
-  plot_annotation(title = "Figure 4 -- Reproduction of Kvich et al. (raw reads, n=119)")
-```
+total_df_kd       <- to_factor(total_df_kd)
+shannon_df_kd     <- to_factor(shannon_df_kd)
+fuso_phylum_df_kd <- to_factor(fuso_phylum_df_kd)
+species_df_kd     <- to_factor(species_df_kd)
+rel_long_kd       <- mutate(rel_long_kd, type = factor(type, levels = type_levels))
 
-- I did not agree with the author's choice to do a one sided test (CRC > others) for panels A, B, and D. I chose to carry
-forward with a two sided test throughout. Since most of the patients are paired (CRC vs paired), I chose to do paired testing.
-Key methodological differences between the reproduction and improved implementation below:
+# Compute improved stats for raw and KneadData-cleaned versions
+stats_raw <- calc_fig4_stats(total_df, shannon_df, fuso_phylum_df, species_df)
+stats_kd  <- calc_fig4_stats(total_df_kd, shannon_df_kd, fuso_phylum_df_kd, species_df_kd)
+make_fig4_panels <- function(total, shannon, fuso, rel, stats, main_title){
+  base_theme <- theme_classic(base_size = 7)
 
-Figure 4 repeated on KneadData-cleaned reads (86 samples) using the improved methodology:
-
-```{r fig4-kd, fig.width=12, fig.height=9}
-make_fig4_panels <- function(total, shannon, fuso, rel, qA, qB, qC, qD_b, qD_f, subtitle) {
   pA <- ggplot(total, aes(x = type, y = total_scaled / 1e6)) +
-    geom_boxplot(outlier.shape = NA) + geom_jitter(width = 0.2, size = 0.8) +
-    geom_signif(comparisons = list(c("CRC","Healthy"), c("CRC","Paired")),
-                annotations = fmt_p(qA), step_increase = 0.12, tip_length = 0.02, textsize = 3) +
-    ylim(0, max(total$total_scaled/1e6) * 1.3) +
-    labs(x = NULL, y = "Scaled Counts (x10^6)",
-         title = "A  Bacterial scaled counts", subtitle = subtitle) + theme_classic()
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(width = 0.2, size = 0.5) +
+    geom_signif(comparisons = list(c("CRC", "Healthy"), c("CRC", "Paired")),
+      annotations = fmt_p(stats$qA),
+      step_increase = 0.12, tip_length = 0.02, textsize = 2) +
+    ylim(0, max(total$total_scaled / 1e6) * 1.3) +
+    labs(x = NULL, y = "Scaled Counts (x10^6)", title = "A  Bacterial scaled counts") + base_theme
+
   pB <- ggplot(shannon, aes(x = type, y = shannon)) +
-    geom_boxplot(outlier.shape = NA) + geom_jitter(width = 0.2, size = 0.8) +
-    geom_signif(comparisons = list(c("CRC","Healthy"), c("CRC","Paired")),
-                annotations = fmt_p(qB), step_increase = 0.1, tip_length = 0.02, textsize = 3) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(width = 0.2, size = 0.5) +
+    geom_signif(comparisons = list(c("CRC", "Healthy"), c("CRC", "Paired")),
+      annotations = fmt_p(stats$qB),
+      step_increase = 0.1, tip_length = 0.02, textsize = 2) +
     ylim(0, max(shannon$shannon) * 1.3) +
-    labs(x = NULL, y = "Shannon Index", title = "B  Alpha Diversity", subtitle = subtitle) + theme_classic()
+    labs(x = NULL, y = "Shannon Index", title = "B  Alpha diversity") +
+    base_theme
+
   pC <- ggplot(fuso, aes(x = type, y = fusobacteria)) +
-    geom_boxplot(outlier.shape = NA) + geom_jitter(width = 0.2, size = 0.8) +
-    geom_signif(comparisons = list(c("CRC","Healthy"), c("CRC","Paired")),
-                annotations = fmt_p(qC), step_increase = 0.12, tip_length = 0.02, textsize = 3) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(width = 0.2, size = 0.5) +
+    geom_signif(comparisons = list(c("CRC", "Healthy"), c("CRC", "Paired")),
+      annotations = fmt_p(stats$qC), step_increase = 0.12, tip_length = 0.02, textsize = 2) +
     ylim(0, max(fuso$fusobacteria) * 1.3) +
-    labs(x = NULL, y = "Scaled Counts", title = "C  Fusobacteria Counts", subtitle = subtitle) + theme_classic()
+    labs(x = NULL, y = "Scaled Counts", title = "C  Fusobacterium counts") +
+    base_theme
+
   pD <- ggplot(rel, aes(x = group, y = rel)) +
-    geom_boxplot(outlier.shape = NA) + geom_jitter(width = 0.2, size = 0.8) +
-    geom_signif(comparisons = list(c("B. fragilis\nCRC","B. fragilis\nHealthy"),
-                                    c("F. nucleatum\nCRC","F. nucleatum\nHealthy")),
-                annotations = fmt_p(c(qD_b[1], qD_f[1])),
-                step_increase = 0.1, tip_length = 0.02, textsize = 3) +
-    labs(x = NULL, y = "Relative abundance",
-         title = "D  B. fragilis / F. nucleatum relative abundance", subtitle = subtitle) +
-    theme_classic() + theme(axis.text.x = element_text(size = 8))
-  (pA | pB) / (pC | pD)
-}
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(width = 0.2, size = 0.5) +
+    geom_signif(comparisons = list(
+        c("B. fragilis\nCRC", "B. fragilis\nHealthy"),
+        c("B. fragilis\nCRC", "B. fragilis\nPaired"),
+        c("F. nucleatum\nCRC", "F. nucleatum\nHealthy"),
+        c("F. nucleatum\nCRC", "F. nucleatum\nPaired")),
+      annotations = fmt_p(c(stats$qD_b[1], stats$qD_b[2], stats$qD_f[1], stats$qD_f[2])),
+      step_increase = 0.1, tip_length = 0.02, textsize = 2) +
+    labs(x = NULL, y = "Relative abundance", title = "D  B. fragilis / F. nucleatum relative abundance") +
+    base_theme +
+    theme(axis.text.x = element_text(angle = 35, hjust = 1, size = 6))
 
-make_fig4_panels(total_df_kd, shannon_df_kd, fuso_phylum_df_kd, rel_long_kd,
-                 qA_kd, qB_kd, qC_kd, qD_b_kd, qD_f_kd, "KneadData-cleaned (n=86)") +
-  plot_annotation(title = "Figure 4 -- KneadData-cleaned reads")
+  (pA | pB) / (pC | pD) + plot_annotation(title = main_title)}
+
+make_fig4_panels(total_df, shannon_df, fuso_phylum_df, rel_long, stats_raw, "Raw unmapped reads (n = 119)")
 ```
 
-### Figure S4 -- Phylum-level bacterial abundance
+**Figure 4.**  Community composition metrics across sample groups.
 
-Phylum names from the 2026 Kraken2 database are harmonized to traditional names used in the paper (e.g. Bacillota → Firmicutes). Campylobacterota and related phyla are merged into Proteobacteria to match the older taxonomy used by the original authors. Species-level Bracken `counts_scaled` are summed by phylum using a taxonomy_id → phylum map built from the Kraken2 report tree (replicating the authors' taxize-based approach without API calls).
-
-```{r s4-data, include=FALSE}
-harmonize_phylum <- function(x) {
-  case_when(
-    x == "Bacillota"         ~ "Firmicutes",
-    x == "Actinomycetota"    ~ "Actinobacteria",
-    x == "Fusobacteriota"    ~ "Fusobacteria",
-    x %in% c("Pseudomonadota","Campylobacterota",
-              "Thermodesulfobacteriota","Thermodesulfobiota") ~ "Proteobacteria",
-    x == "Synergistota"      ~ "Synergistetes",
-    x == "Verrucomicrobiota" ~ "Verrucomicrobia",
-    TRUE                     ~ x
-  )
-}
-
-phylum_colors <- c(
-  "Actinobacteria" = "#E6AB02", "Bacteroidota" = "#A6761D",
-  "Firmicutes"     = "#66A61E", "Fusobacteria" = "#1B9E77",
-  "Proteobacteria" = "#7570B3", "Synergistetes" = "#E7298A",
-  "Verrucomicrobia"= "#D95F02", "Other"         = "#BEBEBE"
-)
-
-# Build taxonomy_id -> phylum map from Kraken2 report tree
-build_tax_map <- function(report_dir) {
-  list.files(report_dir, pattern = "\\.report$", full.names = TRUE) %>%
-    map_dfr(function(f) {
-      parsed <- strsplit(readLines(f), "\t")
-      parsed <- parsed[sapply(parsed, length) == 6]
-      if (!length(parsed)) return(NULL)
-      ranks <- sapply(parsed, `[`, 4); taxids <- as.integer(sapply(parsed, `[`, 5))
-      raw_names <- sapply(parsed, `[`, 6)
-      depths <- nchar(raw_names) - nchar(trimws(raw_names, "left"))
-      sk_vec <- character(length(ranks)); ph_vec <- character(length(ranks))
-      cur_sk <- ""; cur_sk_d <- -1L; cur_ph <- ""; cur_ph_d <- -1L
-      for (i in seq_along(ranks)) {
-        d <- depths[i]; r <- ranks[i]
-        if (cur_ph_d >= 0 && d <= cur_ph_d) { cur_ph <- ""; cur_ph_d <- -1L }
-        if (cur_sk_d >= 0 && d <= cur_sk_d) { cur_sk <- ""; cur_sk_d <- -1L; cur_ph <- ""; cur_ph_d <- -1L }
-        if (r == "D") { cur_sk <- trimws(raw_names[i]); cur_sk_d <- d }
-        if (r == "P") { cur_ph <- trimws(raw_names[i]); cur_ph_d <- d }
-        sk_vec[i] <- cur_sk; ph_vec[i] <- cur_ph
-      }
-      data.frame(taxonomy_id = taxids, superkingdom = sk_vec, phylum = ph_vec,
-                 stringsAsFactors = FALSE) %>% filter(phylum != "")
-    }) %>% distinct(taxonomy_id, .keep_all = TRUE)
-}
-
-build_phylum_df <- function(report_dir, bracken_dir, counts_mat, track_label) {
-  tax_map <- build_tax_map(report_dir) %>% mutate(phylum = harmonize_phylum(phylum))
-  name_phylum <- list.files(bracken_dir, pattern = "\\.bracken$", full.names = TRUE) %>%
-    map_dfr(function(f) read.delim(f) %>% select(name, taxonomy_id)) %>%
-    distinct(name, taxonomy_id) %>%
-    left_join(tax_map, by = "taxonomy_id") %>%
-    filter(superkingdom == "Bacteria", phylum != "") %>% distinct(name, phylum)
-  counts_mat %>% rownames_to_column("name") %>%
-    pivot_longer(-name, names_to = "sample", values_to = "scaled") %>%
-    inner_join(name_phylum, by = "name") %>%
-    group_by(sample, phylum) %>% summarise(scaled = sum(scaled), .groups = "drop") %>%
-    left_join(meta %>% select(sample, type), by = "sample") %>%
-    filter(!is.na(type)) %>% mutate(track = track_label)
-}
-
-phylum_df <- bind_rows(
-  build_phylum_df("no_kneaddata/community_composition/kraken2",
-                  "no_kneaddata/community_composition/bracken", counts_scaled,    "Raw reads"),
-  build_phylum_df("kneaddata/community_composition/kraken2",
-                  "kneaddata/community_composition/bracken",    counts_scaled_kd, "KneadData")
-)
-
-top7 <- phylum_df %>% group_by(phylum) %>% summarise(t = sum(scaled), .groups = "drop") %>%
-  slice_max(t, n = 7) %>% arrange(desc(t)) %>% pull(phylum)
-
-phylum_df <- phylum_df %>%
-  mutate(phylum = ifelse(phylum %in% top7, phylum, "Other"),
-         phylum = factor(phylum, levels = c(top7, "Other")),
-         type   = factor(type, levels = type_levels),
-         track  = factor(track, levels = c("Raw reads", "KneadData")))
-```
-
-```{r s4-counts, fig.width=12, fig.height=7}
-phylum_df %>%
-  filter(phylum != "Other") %>%
-  ggplot(aes(x = type, y = scaled, colour = track)) +
-  geom_boxplot(outlier.shape = NA, position = position_dodge(0.7), width = 0.5) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7),
-              size = 0.7, alpha = 0.6) +
-  facet_wrap(~phylum, scales = "free_y", nrow = 2) +
-  scale_colour_manual(values = c("Raw reads" = "#555555", "KneadData" = "#1B9E77"),
-                      name = "Track") +
-  scale_y_continuous(labels = scales::comma) +
-  labs(x = NULL, y = "Scaled counts",
-       title = "Figure S4B -- Scaled counts for top phyla by sample group") +
-  theme_classic() + theme(strip.text = element_text(face = "bold"),
-                           axis.text.x = element_text(size = 8))
-```
-
+(A) total bacterial scaled counts per sample, representing overall bacterial abundance. (B) shows within-sample alpha diversity measured by the Shannon index, where higher values indicate greater species richness and evenness. (C) shows total scaled counts assigned to the Fusobacterium genus. (D) shows relative abundance of B. fragilis and F. nucleatum within each sample. The equivalent figure for KneadData-cleaned reads is shown in section 2.8.
 
 # Part 2: Further pre-processing of unmapped reads with KneadData
 
-Although the Kvich et al. unmapped reads had been adapter-trimmed and rRNA-depleted upstream, I ran the samples through another round of pre-processing to ensure no residual human sequences were carrying forward. I used the bioBakery's KneadData v0.12.4](https://huttenhower.sph.harvard.edu/kneaddata/), which combines Trimmomatic quality trimming with Bowtie2-based human read decontamination against T2T-CHM13v2.0 (hg39), and evaluate its effect on read quality, sample depth, and community composition relative to the Part 1 baseline.
+Although the Kvich et al. unmapped reads had already undergone adapter trimming and rRNA depletion upstream, I performed an additional round of preprocessing to test whether residual host carryover from these low-biomass biopsy samples could still influence downstream microbial profiling. Because mucosal tissue metatranscriptomes are especially vulnerable to overwhelming host signal, even after an initial host-removal step, I used bioBakery’s [KneadData v0.12.4](https://huttenhower.sph.harvard.edu/kneaddata/)' which combines Trimmomatic quality trimming with Bowtie2-based human decontamination against the T2T-CHM13v2.0 (hg39) reference, and evaluated its effect on read quality, retained sample depth, and community composition relative to the Part 1 baseline.
 
-Scripts: `scripts/kneaddata/01_kneaddata.sh` through `07_normalize_bracken.py`
+Scripts: `scripts/kneaddata/01_kneaddata.sh` to `07_normalize_bracken.py`     
 Local output: `kneaddata/`
 
 ## 2.1 Pre-KneadData quality assessment (FastQC + MultiQC)
@@ -785,8 +629,10 @@ multiqc output/qc/fastqc_pre \
 
 Reports: `kneaddata/qc/multiqc_pre/multiqc_report.html`.
 
+The MultiQC report below shows that read counts vary widely across biopsy samples, which is consistent with the differences in microbial biomass seen throughout the dataset. Per-read quality scores were generally high across all samples. Figure 5 shows the general statistics of all reads, highlighting a small number of high-depth outlier samples, while the per-sequence and per-base quality panels confirm that most reads maintain strong Phred scores (>25–30) across the full read length despite this variation in sequencing depth. The relatively high duplicate read fraction is expected for RNA-seq data, where highly expressed transcripts can generate many identical reads, and therefore does not necessarily indicate a technical issue. Not shown below, but the report also showed the reads were all roughly 150bp as expected.
+
 ![MultiQC results pre KneadData](images/multiqc_pre.png)
-Read counts vary widely across biopsy samples, which is consistent with the differences in microbial biomass seen throughout the dataset. Per-read quality scores were generally high across all samples.
+**Figure 5.** Select MultiQC plots prior to processing.
 
 ## 2.2 Human read removal and quality trimming (script: `01_kneaddata.sh`)
 
@@ -835,22 +681,27 @@ multiqc output/qc/fastqc_pre output/qc/fastqc_post \
 
 Reports: `kneaddata/qc/multiqc_post/multiqc_report.html` and `kneaddata/qc/multiqc_comparison/multiqc_comparison.html`.
 
+Figure 6 below shows the MultiQC summary after KneadData preprocessing. Only a small fraction of reads was removed during the additional host-decontamination and quality-filtering step, indicating that the original unmapped read set was already relatively clean. Read depth still varied substantially across biopsy samples, but per-sequence and per-base quality scores remained consistently high across the retained reads, increasing in quality compared to pre-processing. This suggests that the extra preprocessing step was conservative and primarily removed residual host carryover or low-quality sequences without substantially altering overall sample composition.
+
 ![MultiQC results post KneadData](images/multiqc_post.png)
-Total read counts are reduced across samples after filtering, while read quality remains high. The large variation in retained depth between samples remains, which is expected for low-biomass biopsy-derived microbial reads.
+**Figure 6.** Select MultiQC plots post KneadData processing.
 
 ## 2.4 Sample exclusions
 
-33 samples were excluded due to insufficient read depth or high QC failure rates after KneadData:
+A total of 33 samples were excluded because fewer than 100,000 final paired reads remained after KneadData preprocessing, leaving 86 samples for downstream analyses. 11 were healthy, 9 were CRC, and 13 were paired-normal samples, indicating that the low-depth removals were distributed relatively evenly across sample groups.
 
-- **Lasse samples:** Lasse4--Lasse33 except Lasse9, Lasse20, and Lasse25 (27 excluded)
-- **La samples:** La50, La54, La68, La73, La77, La89 (6 excluded)
+The excluded samples were Lasse21, Lasse28, Lasse17, Lasse4, Lasse18, Lasse8, Lasse16, Lasse6, Lasse32, Lasse14, Lasse22, Lasse13, Lasse15, Lasse23, Lasse11, Lasse7, Lasse26, Lasse5, Lasse10, Lasse29, Lasse27, La73, Lasse33, Lasse12, Lasse31, Lasse19, Lasse24, La54, La77, La89, La50, Lasse30, and La68. 
 
+Importantly, only 6 excluded samples resulted in the loss of a matched CRC–paired comparison, so the paired structure of the dataset was largely preserved.
 
 The 86 retained samples are listed in `samples_filtered.txt`.
 
-## 2.5 Taxonomic profiling -- Kraken2 (script: `04_kraken2.sh`)
+## 2.5 Taxonomic profiling with Kraken2 (script: 04_kraken2.sh)
 
-Same database and confidence threshold as Part 1. SLURM array: 86 tasks, 8 CPUs, 100 GB RAM, 24 h.
+With these processed and filtered reads, taxonomic profiling was performed again using Kraken2. Kraken2 classifies reads by breaking them into k-mers and querying each k-mer against a hash table built from the reference database. Each read is assigned to the lowest common ancestor (LCA) of all database taxa that share its k-mers. The --confidence 0.05 threshold requires that at least 5% of a read's k-mers be associated with the assigned taxon or its descendants, reducing spurious classifications, which is a setting recommended by Pereira-Marques et al. for low-biomass samples. Paired-end reads were classified jointly with --paired, so both mates contribute k-mer evidence to a single classification decision per fragment. 
+
+(This was run with the same database and confidence threshold as Part 1.6.)
+SLURM array: 86 tasks, 8 CPUs, 100 GB RAM, 24 h.
 
 ```bash
 kraken2 \
@@ -863,9 +714,11 @@ kraken2 \
 
 Output: `kneaddata/community_composition/kraken2/{sample}.report` (86 files).
 
-## 2.6 Abundance estimation -- Bracken (script: `05_bracken.sh`)
+## 2.6 Abundance estimation with Bracken (script: 05_bracken.sh)
 
-SLURM array: 86 tasks, 4 CPUs, 16 GB RAM, 4 h. Same parameters as Part 1.
+Bracken was applied to each Kraken2 report to produce refined species-level abundance estimates. Where Kraken2 assigns reads to the most specific node it can confidently classify (often at genus level or higher) many reads land at non-species taxonomic levels due to shared k-mers across related organisms. Bracken uses precomputed k-mer distribution files (built from the same database at the specified read length, -r 150) to probabilistically redistribute those higher-level reads down to species (-l S), proportional to  how much unique sequence each candidate species contributes at that read length. This yields corrected species-level read counts without discarding the ambiguously classified reads. Each sample produces two output files: a .bracken table of species-level estimated counts, and a _bracken.report in Kraken2 report format with redistributed counts — the latter is used in subsequent normalization and as the taxonomic pre-screen for HUMAnN3.
+  
+- SLURM array: 86 tasks, 4 CPUs, 16 GB RAM, 4 h. Same parameters as Part 1.
 
 ```bash
 bracken -d /scratch/st-ctropini-1/ahong/kraken2_standard_db \
@@ -877,12 +730,11 @@ bracken -d /scratch/st-ctropini-1/ahong/kraken2_standard_db \
 
 Output: `kneaddata/community_composition/bracken/` -- 172 files (2 per sample).
 
-## 2.7 Normalize Bracken counts (script: `07_normalize_bracken.py`)
+## 2.7 Normalize Bracken counts (script: 07_normalize_bracken.py)
 
 Same Kvich et al. normalization as Part 1; read counts from post-KneadData paired R1 FASTQ. Minimum-depth sample post-KneadData: La53 (101,423 reads).
 
 ```bash
-conda activate kraken_env
 python scripts/kneaddata/07_normalize_bracken.py
 ```
 
@@ -890,35 +742,27 @@ Output in `kneaddata/community_composition/normalized/`: `counts_unscaled.tsv`, 
 
 ## 2.8 Results: KneadData read quality and sample retention
 
-Community composition comparisons between raw and KneadData-cleaned reads are in section 1.9. This section covers read-level QC outcomes: read fate, depth distribution, excluded samples, and Kraken2 classification rates.
+To assess whether KneadData preprocessing altered the community composition trends seen in Part 1.9 (Figure 4 recreation), Figure 4 is reproduced here on the 86 retained KneadData-cleaned samples using the same statistical framework as above. This allows direct comparison with the raw unmapped reads result shown in section 1.9.
 
-```{r kd-results}
-# [R analysis -- to be added]
-# - Plot read fate across KneadData stages per sample:
-#     stacked bar of retained / removed by QC trim / removed by human decontamination
-#     (from kneaddata/kneaddata_read_counts.tsv)
-# - Plot post-KneadData read depth distribution with exclusion threshold marked
-# - Table of excluded samples: sample ID, raw depth, KneadData depth, clinical group
-# - Verify exclusions are not systematically biased by clinical group
-# - Compare Kraken2 classification rates between raw and KneadData tracks
-#     (for the 86 overlapping samples): % classified, % unclassified
-# Note: community composition comparisons (Figure 4, Figure S4) are shown
-# side-by-side with the raw reads results in section1.9 above.
+```{r kd-results, fig.width=5, fig.height=5.5}
+make_fig4_panels(total_df_kd, shannon_df_kd, fuso_phylum_df_kd, rel_long_kd, stats_kd, "KneadData-cleaned reads (n = 86)")
 ```
+
+**Figure 7.** Community composition metrics after KneadData preprocessing.
+
+Using the same panel layout and statistical tests as Figure 4 in section 1.9. Panels show bacterial scaled counts (A), alpha diversity (B), Fusobacterium abundance (C), and relative abundance of B. fragilis and F. nucleatum (D). 
+
+The overall patterns are consistent with the raw reads analysis, indicating that KneadData preprocessing did not substantially alter the major community composition trends. However, the distributions become statistically tighter after preprocessing, likely reflecting the removal of uniformly low-depth and lower-quality libraries across all sample groups rather than selective loss from any one condition. This reduction in extreme low-count outliers modestly improves within-group consistency and makes the CRC-associated enrichment trends slightly clearer, while preserving the same scaled count relationships observed in the raw-read analysis.
 
 # Part 3: Functional Profiling with HUMANn3
 
-HUMANn3 functional profiling was applied to the KneadData-cleaned reads (84 samples; La98 and La125 excluded). This analysis, which was not performed in the original study, characterizes community-wide and species-resolved metabolic activity across CRC, paired normal, and healthy tissue.
+HUMANn3 functional profiling was applied to the KneadData-cleaned reads (84 samples; La98 and La125 excluded). This analysis, which was not performed in the original study, and I hoped to characterize community-wide and species-resolved metabolic activity across CRC, paired normal, and healthy tissue. HUMANn3 accepts a single-end input file and a taxonomic pre-screen in MetaPhlAn3 format, requiring two preparatory steps per sample: converting the Bracken report to MetaPhlAn3 format, and concatenating R1 + R2 into a single FASTQ.
 
-HUMANn3 v3.6 was used (not v4, which was still in alpha at the time of analysis). HUMANn3 accepts a single-end input file and a taxonomic pre-screen in MetaPhlAn3 format, requiring two preparatory steps per sample: converting the Bracken report to MetaPhlAn3 format, and concatenating R1 + R2 into a single FASTQ.
+**Note:** HUMANn3 v3.6 was used. La98 and La125 were excluded as both are the highest read-depth outliers (La98: ~15M reads, La125: ~12.2M reads vs. median ~0.64M) and did not finish within the allocated wall time. 
 
-**Note:** La98 and La125 were excluded: both are the highest read-depth outliers (La98: ~15M reads, La125: ~12.2M reads vs. median ~0.64M) and did not finish within the 24 h wall time.
+## 3.1 Convert Bracken report to MetaPhlAn3 format (script: 06_bracken_to_mpa.py)
 
-## 3.1 Convert Bracken report to MetaPhlAn3 format (script: `06_bracken_to_mpa.py`)
-
-HUMANn3's `--taxonomic-profile` argument accepts a MetaPhlAn3-format profile to bypass its internal MetaPhlAn step. The KrakenTools `kreport2mpa.py` script was not used due to compatibility issues; a custom script was written. It reads the Bracken-corrected `_bracken.report` and emits only the 7 standard NCBI ranks (Domain to Species) using MetaPhlAn3 prefix notation (`k__|p__|c__|o__|f__|g__|s__`). Species absent from ChocoPhlAn fall back to the UniRef90 translated search; they still contribute to pathway/gene-family tables but without nucleotide-level hits.
-
-This step runs within the HUMANn3 SLURM script but can also be run independently:
+HUMANn3's `--taxonomic-profile` argument accepts a MetaPhlAn3-format profile to bypass its internal MetaPhlAn step. The KrakenTools `kreport2mpa.py` script was not used due to compatibility issues; a custom script was written with the help of Claude Code. It reads the Bracken-corrected `_bracken.report` and emits only the 7 standard NCBI ranks (Domain to Species) using MetaPhlAn3 prefix notation (`k__|p__|c__|o__|f__|g__|s__`). Species absent from ChocoPhlAn fall back to the UniRef90 translated search; they still contribute to pathway/gene-family tables but without nucleotide-level hits.
 
 ```bash
 python scripts/kneaddata/06_bracken_to_mpa.py \
@@ -928,9 +772,14 @@ python scripts/kneaddata/06_bracken_to_mpa.py \
 
 Output: `kneaddata/functional_profiling/humann3_mpa/` (86 `.mpa` files).
 
-## 3.2 Run HUMANn3 (script: `08_humann3.sh` for each track)
+## 3.2 Run HUMANn3 (script: 08_humann3.sh for each track)
 
-Three steps per sample: (1) convert Bracken report to MetaPhlAn3 format (section3.1); (2) concatenate R1 + R2 -- HUMANn3 treats reads independently so concatenation loses no information, and the concatenated file is named `{sample}_cat.fq`, hence all HUMANn3 outputs contain `_cat_`; (3) run HUMANn3.
+For each sample:
+1. convert Bracken report to MetaPhlAn3 format (as in section 3.1 above)
+2. concatenate R1 + R2  (HUMANn3 treats reads independently so concatenation loses no information, and the concatenated file is named `{sample}_cat.fq`, hence all HUMANn3 outputs contain `_cat_`) 
+3. run HUMANn3 (uses the taxonomic profile to guide tiered functional profiling) 
+
+Jobs were parallelized on the Sockeye HPC cluster with one job per sample.
 
 ```bash
 cat {R1} {R2} > output/humann3_reads/{sample}_cat.fq
@@ -947,17 +796,16 @@ humann \
 rm -f output/humann3_reads/{sample}_cat.fq
 ```
 
-SLURM: 16 CPUs, 64 GB RAM, 24 h per task; `--array=0-85` (86 samples; La98 and La125 excluded).
-
-Output per sample: `{sample}_cat_genefamilies.tsv` (UniRef90 gene families, RPK), `{sample}_cat_pathabundance.tsv` (MetaCyc pathway abundances, RPK), `{sample}_cat_pathcoverage.tsv` (MetaCyc pathway coverage, 0--1).
+Output per sample: 
+1. `{sample}_cat_genefamilies.tsv` (UniRef90 gene families, RPK)
+2. `{sample}_cat_pathabundance.tsv` (MetaCyc pathway abundances, RPK)
+3. `{sample}_cat_pathcoverage.tsv` (MetaCyc pathway coverage, 0--1)
 
 ## 3.3 HUMANn3 post-processing
 
-Once all samples were complete, per-sample tables are merged, normalized to copies per million (CPM), and split into stratified and unstratified components.
+Once all samples were complete, per-sample tables are merged, normalized to copies per million (CPM), and split into stratified and unstratified components using the following HUMANn3 built-in commands. This step converts per-sample HUMANn3 outputs into cohort-level comparable matrices suitable for downstream analysis.
 
 ```bash
-conda activate humann3
-
 humann_join_tables -i kneaddata/functional_profiling/humann3 --file_name genefamilies \
     -o kneaddata/functional_profiling/humann3_merged/all_genefamilies.tsv
 
@@ -977,6 +825,8 @@ humann_split_stratified_table \
 ## 3.4 Results: Community-wide functional profiling
 
 ```{r humann3-load}
+# Load .tsvs from 3.3!
+
 KD_MERGED <- "kneaddata/functional_profiling/humann3_merged"
 
 # Unstratified pathway abundance (CPM) — 390 pathways x 84 samples
@@ -1000,8 +850,7 @@ clean_humann_cols <- function(df) {
     str_remove("_cat_Abundance$") %>%
     str_remove("_cat_Coverage$") %>%
     str_replace("^Lasse(\\d+)$", "La\\1")
-  df
-}
+  df}
 path_abund <- clean_humann_cols(path_abund)
 path_cov   <- clean_humann_cols(path_cov)
 path_strat <- clean_humann_cols(path_strat)
@@ -1025,7 +874,7 @@ path_long <- path_mat_filt %>%
   left_join(meta_h3, by = "sample")
 ```
 
-```{r humann3-pcoa, fig.width=7, fig.height=5}
+```{r humann3-pcoa, fig.width=5, fig.height=3}
 path_mat_num <- path_mat_filt %>% as.matrix()
 
 mode(path_mat_num) <- "numeric"
@@ -1044,7 +893,10 @@ data.frame(sample = rownames(pcoa$points),PC1 = pcoa$points[,1],PC2 = pcoa$point
   stat_ellipse(level = 0.75, linetype = "dashed") +
   theme_classic()
 ```
-- The arc shape shows that the primary axis of functional variation follows a continuous gradient rather than discrete disease-associated clustering (between CRC and healthy or paired), reflecting the differences in microbial biomass we already observed and pathway detection sensitivity across low-biomass biopsy samples.
+
+**Figure 8.** PCoA of community-wide MetaCyc pathway profiles from HUMANn3
+
+Principal coordinates analysis of CPM-normalized pathway abundances across CRC, paired normal, and healthy biopsy samples. Samples form a continuous arc-like gradient rather than distinct disease-specific clusters. This probably suggests that the dominant axis of functional variation reflects differences in microbial biomass and pathway detection sensitivity across low-biomass tissue samples rather than discrete CRC-associated functional states.
 
 ```{r humann3-diff-pathways, fig.width=12, fig.height=10, results='asis'}
 # Kruskal-Wallis across groups per pathway, BH correction
@@ -1119,25 +971,42 @@ strat_long %>%
 
 Stratified HUMAnN pathway analysis shows that several CRC-enriched pathways were driven by a limited subset of bacterial taxa rather than broad community-wide contributions. Multiple pathways, including GDP-mannose biosynthesis, homolactic fermentation, and L-citrulline biosynthesis, shows visibly higher mean abundance in CRC biopsies, with dominant contributions from a small number of taxa, including several oral-associated anaerobes previously implicated in colorectal cancer. In contrast, healthy and paired samples generally exhibited lower pathway abundance and more evenly distributed species contributions.
 
-# Discussion
-
-- hard to get statstically significant data from these kind of samples
-- want to be robust by looking at everything (not just picking a couple like the authors did)
-- similar to the authors, i've also run SAMSA2, a microbial analysis pipeline that uses DIAMOND, against just the b.fragilis genome, which seems to give insight, but with the high mapping %
-
 # Conclusion
 
-[To be added]
+- This re-analysis set out to determine whether standard low-biomass metatranscriptomic workflows could recover additional microbial insight from the Kvich et al. colorectal cancer biopsy dataset beyond the original two-reference genome approach.
+- First, reproducing the published microbial analyses on the raw unmapped reads successfully recapitulated the key reported findings, including low but structured alignment to B. fragilis and F. nucleatum, enrichment of Fusobacterium and F. nucleatum in CRC samples, and increased expression of the virulence-associated genes fomA and radD in high-F. nucleatum libraries.
+- The first part of this analysis shows that applying an additional round of KneadData preprocessing does not substantially alter these major community composition patterns, instead reducing low-depth outliers and tightening the same CRC-associated abundance trends. 
+- Comparing the two Figure 4 recreations, the overall bacterial scaled counts became more consistent across sample groups after KneadData preprocessing, which is likely driven by removal of the lowest-depth outlier libraries. In contrast, the within-sample alpha diversity differences between groups became slightly more pronounced, although the CRC versus paired comparison remained non-significant. This is biologically reasonable, as matched CRC and paired normal samples originate from the same patient and are therefore expected to be more similar to one another than to unrelated healthy controls, where inter-patient variability contributes more strongly. Importantly, the key disease-associated trends were preserved after preprocessing: Fusobacterium counts remained enriched in CRC samples, and the same overall pattern was observed for relative abundance of both F. nucleatum and B. fragilis.
+
+
+These results establish that the reproduced baseline is robust and provide confidence for extending the analysis into community-wide functional profiling with HUMAnN3.
 
 # References
 
-References are hyperlinked throughout the document. Below is the full list in order of appearance.
+References are hyperlinked throughout the document. Below is the full list.
 
 1. Pereira-Marques J et al. (2024). Metatranscriptomic profiling of low-biomass samples: implications for the study of host-microbiome interactions. *PMC*. https://pmc.ncbi.nlm.nih.gov/articles/PMC10913719/
 2. Franzosa EA et al. (2018). Species-level functional profiling of metagenomes and metatranscriptomes. *Nature Methods*. https://pmc.ncbi.nlm.nih.gov/articles/PMC8096432/
-3. Kvich L et al. (2024). [Full citation to be added]
+3. Kvich L et al. (2024). Biofilms and core pathogens shape the tumor microenvironment and immune phenotype in colorectal cancer. *Gut Microbes*. https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#abstract
+4. Kneaddata.
+5.Wood et al. (2019). Improved metagenomic analysis with Kraken 2. *Genome Biology*.
+https://pubmed.ncbi.nlm.nih.gov/31779668/
+6. Huttenhower lab. Knead data. available from: https://huttenhower.sph.harvard.edu/kneaddata/
+7. Li et al. (2013). Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM.*[q-bio.GN]* https://arxiv.org/abs/1303.3997
+8. Heng et al. (2009). The Sequence Alignment/Map format and SAMtools. *Bioinformatics* https://academic.oup.com/bioinformatics/article/25/16/2078/204688
+9. Yang et al. (2014) featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. *Bioinformatics*. https://academic.oup.com/bioinformatics/article/30/7/923/232889
+10. Love et al. (2014). Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. *Genome Biology*. https://pubmed.ncbi.nlm.nih.gov/25516281/
+11. Andrews S. (2010). FastQC: a quality control tool for high throughput sequence data. Available online at: http://www.bioinformatics.babraham.ac.uk/projects/fastqc
+12. Bolger et al. (2014). Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* https://doi.org/10.1093/bioinformatics/btu170
+13. Ewels et al. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. *Bioinformatics*. https://academic.oup.com/bioinformatics/article/32/19/3047/2196507
+14. Langemead and Salzberg. (2013). Fast gapped-read alignment with Bowtie 2. *Nat Methods*. https://pmc.ncbi.nlm.nih.gov/articles/PMC3322381/
+15. Westreich et al. (2018). SAMSA2: a standalone metatranscriptome analysis pipeline. *BMC Bioinformatics*. https://pmc.ncbi.nlm.nih.gov/articles/PMC5963165/
+16. Buchfink et al. (2015). Fast and sensitive protein alignment using DIAMOND. *Nat Methods*. https://www.nature.com/articles/nmeth.3176
 
+AI acknowledgement:  
+Anthropic. (2024). Claude 3.5 Sonnet [Large language model]. Retrieved from https://claude.ai.    
 
-AI acknowledgement:     
 scripts created partially or wholly using Cluade 3.5 has the line:    
 `Credit: This file was partially generated using using Claude 3.5 Sonnet by Anthropic - AH`
+
+Claude Code was also used to ask questions in both remote and local directories, to troubleshoot and run scripts, solve git issues, and answer questions related to the tasks for the project.
