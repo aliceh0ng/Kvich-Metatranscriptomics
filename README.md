@@ -107,15 +107,13 @@ flowchart TD
     E --> G[Unmapped reads]
 
     G --> H[KneadData<br/>quality trim + host depletion]
-    H --> I[Filter low-depth samples<br/>< 100k paired reads]
+    H --> I[Kraken2 / Bracken<br/>confidence = 0.05]
 
-    I --> J[Kraken2 / Bracken<br/>confidence = 0.05]
-    J --> K[Convert Bracken report<br/>to MetaPhlAn-style profile]
+    I --> J[Convert Bracken report<br/>to MetaPhlAn-style profile]
+    J --> K[HUMAnN 3]
 
-    K --> L[HUMAnN 3]
-    L --> M[Normalization<br/>CPM]
-
-    M --> N[MaAsLin2<br/>paired differential pathway analysis]
+    K --> L[Normalization<br/>CPM]
+    L --> M[MaAsLin2<br/>paired differential pathway analysis]
 ```
 
 ## GenAI Acknowledgement
