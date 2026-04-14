@@ -15,18 +15,10 @@ knitr::opts_chunk$set(
   message = FALSE
 )
 knitr::opts_knit$set(root.dir = normalizePath("."))
-```
 
-```{r libraries, include=FALSE}
-library(tidyverse)
-library(DESeq2)
-library(patchwork)
-library(ggrepel)
-library(vegan)
-library(ggforce)
-library(ggsignif)
-library(rstatix)
-library(Maaslin2)
+source("r/LoadLibs.R")
+source("r/HelperFunctions.R")
+source("r/ExploreDataset.R")
 ```
 
 # Introduction
@@ -98,12 +90,11 @@ tar -xzf kraken2_standard.tar.gz
 
 The unmapped reads were used directly, without additional pre-processing, to reproduce the original microbial analyses. This establishes a baseline to compare with the published results before any methodological changes are introduced.
 
-Scripts: `scripts/no_kneaddata/01_align_bwa.sh` through `07_normalize_bracken.py`
-Local output: `no_kneaddata/`
+Scripts: `no_kneaddata/scripts/no_kneaddata/01_align_bwa.sh` through `07_normalize_bracken.py`
 
 ## 1.1 Reference genome preparation
 
-Reference genomes for *Bacteroides fragilis* (GCF_003019295.1) and *Fusobacterium nucleatum* (GCF_016889925.1) were downloaded from NCBI. The FASTA sequences and GTF annotation files were concatenated into a single combined reference, then indexed with bwa.
+As the authors described, reference genomes for *Bacteroides fragilis* (GCF_003019295.1) and *Fusobacterium nucleatum* (GCF_016889925.1) were downloaded from NCBI. The FASTA sequences and GTF annotation files were concatenated into a single combined reference, then indexed with bwa.
 
 ```bash
 cat refs/GCF_003019295.1/GCF_003019295.1_ASM301929v1_genomic.fna \
@@ -126,7 +117,8 @@ Chromosome assignments in the combined reference:
 
 ## 1.2 Alignment to bacterial references (script: 01_align_bwa.sh)
 
-Paired-end reads from all 119 samples were aligned to the combined reference with bwa-mem v0.7.19. SLURM array: 119 tasks, 8 CPUs, 64 GB RAM, 24 h.
+Paired-end reads from all 119 samples were aligned to the combined reference with bwa-mem v0.7.19. 
+SLURM array: 119 tasks, 8 CPUs, 64 GB RAM, 24 h.
 
 ```bash
 bwa mem \
@@ -140,11 +132,11 @@ bwa mem \
 samtools index output/bam/{sample}.bam
 ```
 
-BAMs are on the server only (`/scratch/st-ctropini-1/ahong/bfrag3/output/bam/`) and are not included in this repository due to file size.
+Output BAM files are on the server only (`/scratch/st-ctropini-1/ahong/bfrag3/output/bam/`) and are not included in this repository due to file size. 
 
 ## 1.3 Alignment QC (script: 02_flagstat.sh)
 
-`samtools flagstat` was run per sample; results were aggregated into a MultiQC report. SLURM array: 119 tasks, 2 CPUs, 8 GB RAM, 1 h.
+Flagstat reads the SAM flags in each BAM and counts how many reads fall into each category, such as . It produces a small text file per sample like:`samtools flagstat` was run per sample; results were aggregated into a MultiQC report. SLURM array: 119 tasks, 2 CPUs, 8 GB RAM, 1 h.
 
 ```bash
 # Per sample
@@ -731,7 +723,11 @@ bracken -d /scratch/st-ctropini-1/ahong/kraken2_standard_db \
 
 Output: `kneaddata/community_composition/bracken/` -- 172 files (2 per sample).
 
-## 2.7 Normalize Bracken counts (script: 07_normalize_bracken.py)
+## 2.7 Check Kraken2/Bracken output 
+
+
+
+## 2.8 Normalize Bracken counts (script: 07_normalize_bracken.py)
 
 Same Kvich et al. normalization as Part 1; read counts from post-KneadData paired R1 FASTQ. Minimum-depth sample post-KneadData: La53 (101,423 reads).
 
@@ -807,20 +803,23 @@ Output per sample:
 Once all samples were complete, per-sample tables are merged, normalized to copies per million (CPM), and split into stratified and unstratified components using the following HUMANn3 built-in commands. This step converts per-sample HUMANn3 outputs into cohort-level comparable matrices suitable for downstream analysis.
 
 ```bash
-humann_join_tables -i kneaddata/functional_profiling/humann3 --file_name genefamilies \
-    -o kneaddata/functional_profiling/humann3_merged/all_genefamilies.tsv
+humann_join_tables \
+    -i output/humann3 \
+    --file_name _cat_genefamilies \
+    --search-subdirectories \
+    -o output/humann3_merged/all_genefamilies.tsv
 
-humann_join_tables -i kneaddata/functional_profiling/humann3 --file_name pathabundance \
-    -o kneaddata/functional_profiling/humann3_merged/all_pathabundance.tsv
-
-humann_renorm_table \
-    --input  kneaddata/functional_profiling/humann3_merged/all_genefamilies.tsv \
-    --units cpm \
-    --output kneaddata/functional_profiling/humann3_merged/all_genefamilies_cpm.tsv
-
-humann_split_stratified_table \
-    --input  kneaddata/functional_profiling/humann3_merged/all_pathabundance.tsv \
-    --output kneaddata/functional_profiling/humann3_merged/
+humann_join_tables \
+    -i output/humann3 \
+    --file_name _cat_pathabundance \
+    --search-subdirectories \
+    -o output/humann3_merged/all_pathabundance.tsv
+    
+humann_join_tables \
+    -i output/humann3 \
+    --file_name _cat_pathcoverage \
+    --search-subdirectories \
+    -o output/humann3_merged/all_pathcoverage.tsv
 ```
 
 ## 3.4 Results: Community-wide functional profiling
@@ -1064,7 +1063,7 @@ plot_df %>%
 
 # Conclusion
 
-This re-analysis set out to determine whether a more standard low-biomass metatranscriptomic workflow, as described by Pereira-Marques et al. could recover additional microbial insight from the Kvich et al. colorectal cancer biopsy dataset beyond the original two-reference genome alignment strategy. Reproducing the published microbial analyses on the raw unmapped reads successfully recapitulated the key reported findings, including enrichment of Fusobacterium (specifically F. nucleatum) in CRC samples, and increased expression of the virulence-associated genes fomA and radD in high F. nucleatum samples. Importantly, the first part of this analysis showed that applying an additional round of KneadData preprocessing did not substantially alter these major community composition patterns. Instead, it primarily removed the lowest-depth outlier libraries, making overall bacterial scaled counts more consistent across sample groups while preserving the same CRC-associated enrichment trends. Alpha diversity differences became slightly more pronounced after the extra preprocessing.
+This re-analysis set out to determine whether a more standard low-biomass metatranscriptomic workflow, as described by Pereira-Marques et al. could recover additional microbial insight from the Kvich et al. colorectal cancer biopsy dataset beyond the original two-reference genome alignment strategy. Reproducing the published microbial analyses on the raw unmapped reads successfully recapitulated the key reported findings, including enrichment of Fusobacterium (specifically F. nucleatum) in CRC samples, and increased expression of the virulence-associated genes fomA and radD in high F. nucleatum samples. The first part of this analysis showed that applying an additional round of KneadData preprocessing did not substantially alter these major community composition patterns. Instead, it primarily removed the lowest-depth outlier libraries, making overall bacterial scaled counts more consistent across sample groups while preserving the same CRC-associated enrichment trends. Alpha diversity differences became slightly more pronounced after the extra preprocessing.
 
 Extending the workflow through Kraken2/Bracken, HUMANn3, and paired MaAsLin2 modeling revealed additional CRC-associated functional pathway shifts that were not accessible through the original targeted reference approach. Notably, the top differentially abundant pathways remained significant at q-values below 0.15, which is well within the commonly used [MaAsLin2 default exploratory threshold of q < 0.25](https://forum.biobakery.org/t/q-value-threshold-for-significance/4520),making these findings noteworthy despite the challenges of a low-biomass biopsy setting. Many of the strongest signals involved amino acid biosynthesis and degradation, which is could support existing studies reporting enrichment of microbial amino acid metabolism in CRC and pre-surgical tumor-associated microbiomes, including [Ramzy et al.'s](https://pubmed.ncbi.nlm.nih.gov/40314699/) study from 2025, who found enrichment of amino acid metabolism from CRC. These results suggest that broader functional profiling could potentially uncover biologically meaningful CRC-associated microbial activity even when taxonomic signals remain subtle. 
 

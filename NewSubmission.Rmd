@@ -1,0 +1,654 @@
+---
+title: "Metatranscriptomic Analysis of Microbial Reads from Colorectal Cancer Patient Biopsies"
+author: "Alice Hong"
+date: "2026-04-13"
+output: pdf_document
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+knitr::opts_knit$set(root.dir = normalizePath("."))
+
+source("r/LoadLibs.R")
+source("r/HelperFunctions.R")
+source("r/ExploreDataset.R")
+source("r/KneadData.R")
+source("r/Flagstat.R")
+source("r/bfrag_fnuc_gene_expression.R")
+source("r/QC_bracken.R")
+source("r/CommunityComp.R")
+source("r/AnalyzeMaAsLin.R")  # sources LoadHumann3.R and RunMaAsLin.R internally
+source("r/AnalyzeDEseq.R")
+```
+
+# Introduction
+
+## Background
+
+Characterizing microbial abundance and function from human tissue samples such as biopsies presents substantial challenges for analysis. Unlike stool or cecal samples that contain high microbial biomass, mucosal tissue biopsies contain a low ratio of microbial to host cells, causing sequencing depth to be overwhelmingly dominated by host RNA. Therefore, standard metatranscriptomic workflows optimized for microbe-rich samples are often poorly suited for tissue-based studies. At the same time, tissue-derived samples offer a unique opportunity to simultaneously investigate both host transcriptional responses and the activity of spatially localized microbes at the mucosal interface, where many biologically relevant host-microbe interactions occur. As a result, analytical frameworks must balance efficient recovery of low-abundance microbial transcripts with preservation of host-derived signals that provide critical context for interpreting microbial function in situ.
+
+Marker-based taxonomic classifiers such as [MetaPhlAn 4]( https://pubmed.ncbi.nlm.nih.gov/36823356/) and [mOTUs3]( https://pubmed.ncbi.nlm.nih.gov/36464731/) rely using species-specific marker genes, but when microbial reads make up only a small fraction of the sample, there may not be enough of those reads to detect them reliably. A 2024 benchmarking paper demonstrates this by showing that in synthetic samples containing 97% host cells, marker-based methods achieved recall as low as 0.05-0.15, meaning the vast majority of species present went undetected. ([Pereira-Marques, 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC10913719/)) This loss of sensitivity at the taxonomic level then carries on into functional profiling, since tools like [HUMAnN 3](https://pmc.ncbi.nlm.nih.gov/articles/PMC8096432/)  depend on accurate species identification to build sample-specific pangenome databases for their nucleotide search step.
+
+To address this, Pereira-Marques et al. proposed a metatranscriptomics strategy specifically tailored for low-biomass samples. ([Pereira-Marques, 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC10913719/)) Their workflow suggests Kraken 2/Bracken (with the confidence threshold raised to 0.05 to reduce false positives while preserving high recall) with [HUMAnN 3](https://pmc.ncbi.nlm.nih.gov/articles/PMC8096432/) for functional profiling. By feeding the more complete Kraken 2/Bracken taxonomic profile into HUMAnN 3, a greater proportion of reads are captured during the nucleotide search step, reducing reliance on the computationally expensive translated search and improving overall detection of microbial gene families. 
+
+## Overview of original experiment
+
+In their study ['Biofilms and core pathogens shape the tumor microenvironment and immune phenotype in colorectal cancer'](https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#abstract) Kvich et al. investigate the interplay between host tissue and mucosa-associated bacteria in colorectal cancer (CRC) using a dual-RNAseq approach (host) combined with fluorescence in situ hybridization (FISH) microscopy. Mucosal colon biopsies were collected from CRC patients (tumor and paired normal tissue) and healthy controls at Zealand University Hospital, Denmark. FISH was used to visualize bacterial biofilms and to detect B. fragilis and Fusobacterium spp. directly in tissue sections, while RNA sequencing captured both host and microbial transcripts from the same samples.
+
+On the host side, reads were aligned to the human reference genome and used for differential gene expression analysis (DESeq2), pathway enrichment, and immune cell deconvolution using multiple scoring methods. The host RNA-seq analyses revealed that CRC samples with high bacterial activity displayed a pro-inflammatory transcriptomic profile, with enrichment of interleukin-10 signaling, defensins, and chemokine receptor binding pathways, as well as shifts in immune cell infiltration including increased M2 macrophages, regulatory T-cells, and myeloid dendritic cells.
+
+For the microbial component, trimmed reads were classified with Kraken 2/Bracken to determine bacterial community composition, revealing that CRC tissue harbored higher overall bacterial counts and was enriched for Bacteroidota, Fusobacteriota, and Actinobacteria, with F. nucleatum accounting for approximately 79% of Fusobacteria. Additionally, reads that did not map to the human genome were re-aligned to a custom concatenated reference of B. fragilis and F. nucleatum to identify which genes these species were expressing in the tumor microenvironment. The authors reported the top 20 most highly expressed genes for each species, but noted that most were highly conserved housekeeping genes (e.g. tuf, fusA, gap, dnaK, groL) shared across many bacteria, making species-specific functional inference not possible.
+
+## Justification for re-analysis
+
+Kvich et al.'s analysis of the microbial transcriptome was limited in scope. For functional characterization, unmapped (non-human) reads were aligned to only two representative reference genomes, B. fragilis and F. nucleatum, rather than being profiled against a comprehensive database. This approach is not standard practice in metatranscriptomics as it risks misattributing reads from closely related species to the two chosen references, and it discards transcriptional information from the broader microbial community entirely. The authors acknowledged that the results were largely uninformative, as the most highly expressed genes were conserved across many bacterial species. Notably, no justification was provided for why a community-wide functional profiling approach was not pursued.
+
+Tools such as HUMAnN 3, particularly when combined with optimized Kraken 2/Bracken as proposed above, are specifically designed for this type of analysis. They provide both community-wide functional profiling and species-resolved pathway analysis simultaneously, enabling a far more comprehensive view of microbial activity in the tumor microenvironment. Given that the Kvich et al. dataset comprises approximately 90 deeply sequenced mucosal biopsy samples from CRC, paired normal, and healthy tissues (the type of low-biomass samples the Pereira-Marques workflow was validated for) there is a clear opportunity to re-analyze this data using standard metatranscriptomic methods. Such a re-analysis could reveal functional contributions from the broader microbial community and species-resolved pathway differences between CRC and healthy tissue that the original two-genome approach could not detect.
+
+## Overview of methods
+
+This re-analysis is structured in three stages. First, the Kvich et al. microbial analysis is reproduced on the raw unmapped reads to confirm that our pipeline produces similar results as the published paper. Second, additional pre-processing, including quality trimming and human read decontamination using KneadData, is applied to the same reads. Its effect on sample depth and community composition is benchmarked against the baseline, and low-read-depth samples are excluded. Third, functional profiling with HUMANn3 is performed on the KneadData-cleaned reads (84 samples); this analysis was not attempted by the original authors.
+
+# Dataset
+
+Sequencing data containing human reads were not shraed by Kvich et al. due to public health information reasons. Instead, a subset of the deeply sequenced RNA-seq data was shared upon agreement between Lasse Kvich, Blaine Gabriel Fritz, and Carolina Tropini. 
+
+These reads are unmapped reads that did not align to GRCh38. The upstream processing the authors performed consisted of adapter trimming with Cutadapt, ribosomal RNA removal with SortMeRNA, and alignment to GRCh38 with bwa-mem v0.7.17. The unmapped fraction was provided as 119 paired-end samples, named `{sample}_unmapped_R1.fq` / `{sample}_unmapped_R2.fq` (238 files total, read length ~150 bp, sequencer Illumina A00962). Metadata contaning patient ID and sample type was obtained from Kvich and Fritz as well. There are three biological groups:
+
+| Group | No. of Samples | Description |
+|---|---|---|
+| CRC | 40 | Tumor biopsies from CRC patients |
+| Paired normal | 39 | Paired normal tissue from the same CRC patients |
+| Healthy control | 39 | Mucosal biopsies from healthy individuals |
+
+Out of 119 samples, 1 does not have metadata. There is extra 1 CRC sample that does not have a paired normal sample. All sample names are listed in `samples_all.txt` (119 samples).
+
+# Computational environment
+
+All compute jobs were run on the UBC ARC Sockeye HPC cluster using SLURM. Scripts for Parts 1 and 3a are in `scripts/no_kneaddata/`; scripts for Parts 2 and 3b are in `scripts/kneaddata/`. Each directory is numbered in execution order. Per-sample steps were submitted as SLURM array jobs.
+
+**Databases:**
+
+| Database | Version |
+|---|---|---|
+| Kraken2 standard | k2_standard_20260226 |
+| KneadData human reference | T2T-CHM13v2.0 (hg39) |
+| HUMANn3 nucleotide | ChocoPhlAn (full) |
+| HUMANn3 protein | UniRef90 |
+
+The Kraken2 standard database was downloaded as below:
+
+```bash
+cd /scratch/st-ctropini-1/ahong/kraken2_standard_db
+wget -c https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20260226.tar.gz \
+    -O kraken2_standard.tar.gz
+tar -xzf kraken2_standard.tar.gz
+```
+
+**Tools/Pipelines:**
+<!-- Fill out!! -->
+
+# 1. Quality control and pre-processing
+<!-- Chose to further pre-process data, going through another round of pre-processing -->
+
+Although the Kvich et al. unmapped reads had already undergone adapter trimming and rRNA depletion upstream, I wanted to confirm there was no residual host carryover from these dual RNA-seq samples that influence downstream microbial profiling. I used bioBakery’s [KneadData v0.12.4](https://huttenhower.sph.harvard.edu/kneaddata/)' which combines Trimmomatic quality trimming with Bowtie2-based human decontamination against the T2T-CHM13v2.0 (hg39) reference, and evaluated its effect on read quality, retained sample depth, and community composition relative to the baseline.
+
+Scripts: `scripts/kneaddata/01_kneaddata.sh` to `03_multiqc.sh`   
+
+## 1.1 Quality assessment of unampped reads with FastQC
+
+FastQC was run on all 238 raw unmapped FASTQ files to establish a quality baseline before KneadData.
+
+```bash
+fastqc input/*.fq --outdir output/qc/fastqc_pre --threads 16
+
+multiqc output/qc/fastqc_pre \
+    --outdir output/qc/multiqc_pre --filename multiqc_report
+```
+
+Reports: `kneaddata/qc/multiqc_pre/multiqc_report.html`.
+
+![MultiQC results pre KneadData](images/multiqc_pre.png)
+**Figure 1.** Select MultiQC summary plots prior to processing.
+
+The MultiQC report shows that read counts vary widely across biopsy samples, with a few outlier samples having very high depth of up to 15M reads. The large porportion of duplicates is expected for RNA-seq reads, and is not a cause of concern. The mean sequence quality per sample seem to be consistently high for all samples regardless of the sample size, and most reads maintain high Phred scores of above 25.
+
+```{r, fig.width=8, fig.height=2.75}
+# Figure plotted in r/ExploreDataset.R
+
+(p_depth | p_depth2 | p_qual | p_dups) +
+  plot_annotation(title = " ")
+```
+
+**Figure 2.** FastQC results by sample type.
+
+From left to right, Figure 2 shows the total read depth across all samples, read depth zoomed to samples below 2M reads, mean Phred quality score, and percentage of duplicate reads. Sequence quality and duplication rates are comparable across CRC, paired normal, and healthy groups, not indicating quality bias by condition. However, all high read-depth outliers belong to the CRC group.
+
+## 1.2 Human read removal and quality trimming (script: 01_kneaddata.sh)
+
+A part of the bioBakery suite, the KneadData pipeline runs Trimmomatic quality trimming and Bowtie2 human decontamination with a single command. `--decontaminate-pairs strict` (the default mode) removes a read pair if either mate maps to the human reference. `--bypass-trf` skips tandem repeat filtering, which is not relevant for bacterial RNA-seq. 
+
+SLURM array: 119 tasks, 8 CPUs, 32 GB RAM, 12 h.
+
+```bash
+kneaddata \
+    --input1 input/{sample}_unmapped_R1.fq \
+    --input2 input/{sample}_unmapped_R2.fq \
+    --reference-db dbs/human_genome/hg_39 \
+    --output kneaddata_output/{sample}/ \
+    --threads 8 \
+    --trimmomatic /home/alicesh/miniconda3/envs/bfrag4/share/trimmomatic-0.40-0 \
+    --trimmomatic-options "SLIDINGWINDOW:4:20 MINLEN:50 LEADING:3 TRAILING:3" \
+    --bypass-trf --remove-intermediate-output \
+    --log kneaddata_output/{sample}/{sample}.log
+```
+
+Trimmomatic parameters: `SLIDINGWINDOW:4:20` trims when a 4-base window quality drops below Q20; `MINLEN:50` discards reads shorter than 50 bp; `LEADING:3 TRAILING:3` removes bases with quality < 3 from read ends.
+
+Read counts at each stage compiled with:
+
+```bash
+kneaddata_read_count_table \
+    --input kneaddata_output/ --output kneaddata/kneaddata_read_counts.tsv
+```
+
+Output: `kneaddata/kneaddata_read_counts.tsv`.
+
+```{r, fig.width=7, fig.height=3}
+# Figure plotted in r/KneadData.R
+p_bar + inset_element(p_bar_zoom, left = 0.06, bottom = 0.2, right = 0.8, top = 0.95)
+```
+**Figure 3.** Visualization of reads removed from each sample.
+
+As expected, the unmapped reads contained a very small amount of reads that mapped back to the human genome (pink), confirming that the original bwa-mem alignment against GRCh38 removed the majority of host sequences upstream. The dominant source of read loss was quality trimming (blue), showing that shorter or lower-quality fragments are more prevalent when microbial reads are a small fraction of total sequencing input. The panel zooms into the low-depth samples, where quality trimming accounts for a proportionally larger fraction of the starting reads.
+
+## 1.3 Post-KneadData quality assessment (scripts: 02_fastqc.sh, 03_multiqc.sh)
+
+FastQC was re-run on the cleaned paired output files. MultiQC reports were generated for post-KneadData reads alone and as a combined pre/post comparison. MultiQC was run from the base conda environment (`/home/alicesh/miniconda3/bin/multiqc`) -- the `bfrag4` environment has a broken metadata issue. SLURM: 16 CPUs, 32 GB RAM, 12 h (FastQC); 4 CPUs, 16 GB RAM, 1 h (MultiQC).
+
+```bash
+fastqc kneaddata_output/*/*_kneaddata_paired_*.fastq \
+    --outdir output/qc/fastqc_post --threads 16
+
+multiqc output/qc/fastqc_post \
+    --outdir output/qc/multiqc_post --filename multiqc_report
+
+multiqc output/qc/fastqc_pre output/qc/fastqc_post \
+    --outdir output/qc/multiqc_comparison --filename multiqc_comparison
+```
+
+Reports: `kneaddata/qc/multiqc_post/multiqc_report.html` and `kneaddata/qc/multiqc_comparison/multiqc_comparison.html`.
+
+Figure 4 below shows the MultiQC summary after KneadData preprocessing. Only a small fraction of reads was removed during the additional host-decontamination and quality-filtering step, indicating that the original unmapped read set was already relatively clean. Read depth still varied substantially across biopsy samples, but per-sequence and per-base quality scores remained consistently high across the retained reads, increasing in quality compared to pre-processing. This suggests that the extra preprocessing step was conservative and primarily removed residual host carryover or low-quality sequences without substantially altering overall sample composition.
+
+![MultiQC results post KneadData](images/multiqc_post.png)
+**Figure 4.** Select MultiQC plots post KneadData processing.
+
+## 1.4 Low depth samples
+
+In low-biomass samples, aggressive quality trimming removes reads that might be slightly lower quality but are still informative enough for mapping downstream using Kraken2 or HUMANn3. There is a tradeoff between read quality and information lost, as every read removed is a read that can't contribute to taxonomic classification or functional profiling, and unlike high-biomass samples, there is likely not enough redundant coverage to fall back on. 
+
+A downstream consequence may be reduced sensitivity: fewer species and pathways detected, with less statistical power behind those that are. This is especially problematic for HUMANn3's translated search step, which is already the fallback for reads that couldn't be placed during nucleotide search. Those reads tend to come from less well-characterized organisms with sequences more divergent from reference databases, and are the most likely to have slightly lower quality scores due to their low abundance in the sample. The Trimmomatic settings used here (SLIDINGWINDOW:4:20, MINLEN:50) are standard defaults.
+
+| Metric | Count |
+|:-------|------:|
+| Samples with <100k reads before KneadData | 5 |
+| Samples with <100k reads after KneadData | 33 |
+| — Healthy | 11 |
+| — CRC | 9 |
+| — Paired normal | 13 |
+
+Only 6/33 low count samples are from matched CRC–paired comparisons, meaning that if these were to be excluded, the paired structure of the dataset would still be largely preserved. 
+
+# 2. Gene expression anlaysis
+
+The unmapped reads were used directly by the authors without additional pre-processing. To first reproduce the original analysis, all steps below were repeated twice: once for unmapped reads and once for reads that went through the additional KneadData pipeline.
+
+Scripts: `no_kneaddata/scripts/no_kneaddata/01_align_bwa.sh` through `07_normalize_bracken.py`
+
+## 2.1 Reference genome preparation
+
+As the authors described, reference genomes for *Bacteroides fragilis* (GCF_003019295.1) and *Fusobacterium nucleatum* (GCF_016889925.1) were downloaded from NCBI. The FASTA sequences and GTF annotation files were concatenated into a single combined reference, then indexed with bwa.
+
+```bash
+cat refs/GCF_003019295.1/GCF_003019295.1_ASM301929v1_genomic.fna \
+    refs/GCF_016889925.1/GCF_016889925.1_ASM1688992v1_genomic.fna \
+    > refs/combined/combined_bfrag_fnuc.fna
+
+cat refs/GCF_003019295.1/GCF_003019295.1_ASM301929v1_genomic.gtf \
+    refs/GCF_016889925.1/GCF_016889925.1_ASM1688992v1_genomic.gtf \
+    > refs/combined/combined_bfrag_fnuc.gtf
+
+bwa index refs/combined/combined_bfrag_fnuc.fna
+```
+
+Chromosome assignments in the combined reference:
+
+| Chromosome | Organism |
+|---|---|
+| `NZ_CP069563.1` | *Bacteroides fragilis* (locus tag prefix `I6J55_RS`) |
+| `NZ_CP028101.1` | *Fusobacterium nucleatum* (locus tag prefix `C7Y58_RS`) |
+
+Scripts: `scripts/no_kneaddata/01_align_bwa.sh` through `07_normalize_bracken.py`
+Local output: `no_kneaddata/`
+
+## 2.2 Alignment to bacterial references (script: 01_align_bwa.sh)
+
+Paired-end reads from all 119 samples were aligned to the combined reference with bwa-mem v0.7.19. 
+SLURM array: 119 tasks, 8 CPUs, 64 GB RAM, 24 h.
+
+```bash
+bwa mem \
+    -t 8 \
+    -R "@RG\tID:{sample}\tSM:{sample}\tLB:{sample}\tPL:ILLUMINA" \
+    refs/combined/combined_bfrag_fnuc.fna \
+    input/{sample}_unmapped_R1.fq \
+    input/{sample}_unmapped_R2.fq \
+  | samtools sort -@ 8 -o output/bam/{sample}.bam
+
+samtools index output/bam/{sample}.bam
+```
+
+Output BAM files are on the server only (`/scratch/st-ctropini-1/ahong/bfrag3/output/bam/`) and are not included in this repository due to file size. 
+
+## 2.3 Alignment QC (script: 02_flagstat.sh)
+
+samtools flagstat was run on each BAM to verify the alignment quality after mapping unmapped reads to the combined B. fragilis and F. nucleatum reference. It counts how many reads are mapped, properly paired, singletons, duplicates, etc., giving a quick per-sample summary of how the alignment went. This was aggregated into a MultiQC report.
+SLURM array: 119 tasks, 2 CPUs, 8 GB RAM, 1 h.
+
+```bash
+# Per sample
+samtools flagstat \
+    -@ 2 \
+    output/bam/{sample}.bam \
+    > output/qc/flagstat/{sample}.flagstat
+
+# MultiQC aggregation
+multiqc output/qc/flagstat \
+    --outdir output/qc/multiqc \
+    --filename bwa_alignment_qc
+```
+
+Per-sample flagstat files: `no_kneaddata/qc/flagstat/` 
+MultiQC report: `no_kneaddata/qc/multiqc/bwa_alignment_qc.html`.    
+
+Explored in r/Flagstat.R, there were close to 0% singletons for most samples, with the highest sample having 0.84% singletons. The lowest % of total reads mapped to these reference genomes was 0.08% (La21, CRC sample with over 100k reads). The highest % mapped was 15.47% (La122, CRC sample with over 350k reads). Median was 2.74% and Mean was 3.6% mapped back.
+
+
+
+```{r, fig.width=5, fig.height=2.5}
+# Results explored in r/Flagstat.R
+p_mapped
+```
+
+**Figure 5.** Percent of all reads mapped back to either B. fragilis or F. nucleatum reference genomes.   
+
+Because reads from closely related species (other Bacteroides or Fusobacterium spp.) will also align to the B. fragilis and F. nucleatum references, the mapping rates likely overestimate the true abundance of these two species. Without independent metagenomic data to establish community composition, it is not possible to determine what proportion of these alignments are misattributed from related taxa which is part of the motivation for the community-wide functional profiling approach explored in part 4. 
+
+
+## 2.4 Gene expression quantification (script: 03_featurecounts.sh)
+
+featureCounts quantified per-gene read counts across all 119 BAMs simultaneously. Single SLURM job: 8 CPUs, 32 GB RAM, 24 h.
+
+```bash
+featureCounts \
+    -p -B -C \
+    -T 8 \
+    -a refs/combined/combined_bfrag_fnuc.gtf \
+    -F GTF -t CDS -g gene_id \
+    -o output/counts/counts.txt \
+    output/bam/*.bam
+```
+
+Key flags: `-p` paired-end; `-B` requires both mates to map; `-C` discards chimeric pairs; `-t CDS` required because NCBI bacterial GTFs annotate protein-coding genes as `CDS` features, not `exon`.
+
+Output: `no_kneaddata/alignment/counts/counts.txt`, `kneaddata/alignment/counts/counts.txt`
+
+- matrix of genes (rows) × samples (columns) with raw integer read counts.
+
+## 2.5 Gene annotations (script: 03b_make_gene_annotations.py)
+
+A gene annotation table was generated from the combined GTF by first collecting `product` descriptions from `CDS` feature lines into a `gene_id -> product` dictionary, then joining to each `gene` feature line. This is required because `product` is a CDS-level attribute in NCBI bacterial GTFs, not a gene-level attribute.
+
+```bash
+python scripts/no_kneaddata/03b_make_gene_annotations.py \
+    refs/combined/combined_bfrag_fnuc.gtf \
+    > no_kneaddata/alignment/gene_annotations.tsv
+```
+
+Output: `no_kneaddata/alignment/gene_annotations.tsv` - columns: `gene_id`, `gene` (short name), `product`.
+Output: `kneaddata/alignment/gene_annotations.tsv`
+
+## 2.6 Gene expression analysis and results
+
+Reproducing Kvich et al.'s analysis. Gene expression results were used to recreate the paper's Figure S6, and Table S2. The analysis was done for both samples that were further processed with KneadData vs the original unmapped samples. As they produced very similar results, the analysis of results from samples that did not go through extra KneadData step is shown here. 
+
+### 2.6.1 Recreating figures from Kvich et al.
+
+Figure S6 from the authors was recreated to visualize how much of each sample’s non-human read fraction could be assigned to the two-species reference (B. fragilis + F. nucleatum). As above, this helps identify the subset of high-depth samples in which the two target species contribute a substantial fraction of the unmapped reads. Figure 6 below looks very similar to Figure S6 that is published.
+
+#### Figure S6 recreation - Non-human read mapping per sample
+
+```{r, fig.width=12, fig.height=4, out.width="100%", fig.align="center"}
+# Plotted in bfrag_fnuc_gene_expression.R
+plot_s6(reads_df)
+```
+
+**Figure 6.** Bacterial gene expression in CRC samples.
+
+### Table S2 recreation, Top 5 expressed genes per organism (CRC samples, over 1M reads)
+
+To identify the most highly expressed bacterial genes in CRC tissue, the authors noramlzied the raw featureCounts data using DESeq2's variance-stabilizing transformation (VST), which stabilizes variance across genes regardless of their mean expression level. VST-normalized values were then averaged across CRC samples that passed the 1M read depth cutoff, and genes were ranked by mean expression. This identifies which genes are most actively transcribed in CRC samples, but does not test for differential expression between conditions. Only protein-coding genes with a named product annotation were included. The resulting top genes per species were dominated by conserved housekeeping genes (elongation factors, ribosomal proteins, chaperonins), which is likely a part of what led the authors to conclude that this gene expression approach was largely uninformative for species-specific functional inference.
+
+```{r}
+# Showing just top 5 to save space, whole list available in bfrag_fnuc_gene_expression.R
+knitr::kable(table_s2, caption="Top 5 Expressed Genes in CRC Samples per Species")
+```
+
+The same genes appear from my re-creation of this highest expressed gene table as in the paper. Only the top 5 genes are shown here.
+
+### 2.6.2 Differential expression analysis
+
+After recreating the plots, an exploratory DE analysis was performed. DESeq2 was used to compare gene-level read counts across CRC, paired normal, and healthy groups. The above 1M read depth filter applied by the original authors was not used here because all samples exceeding that threshold are CRC samples, which would eliminate the between-group comparisons entirely. As a result, the analysis includes extreme sparsity and depth variation that should be considered when interpreting results. Without independent metagenomic data to estimate species-level DNA copy number, the counts reflect a mixture of true transcriptional activity and underlying bacterial abundance, and the two signals cannot be separated. Results should therefore be interpreted as differences in combined bacterial abundance and activity between conditions, rather than purely differential gene expression.
+
+```{r deseq-plots, fig.width=12, fig.height=6}
+p_heatmap 
+```
+
+**Figure 7.** Heatmap of the top 25 differentially abundant bacterial genes across CRC, paired normal, and healthy tissues.
+
+Rows are the top-ranked genes from the DESeq2 analysis of the combined B. fragilis and F. nucleatum reference alignment, and columns represent biopsy samples. Values are shown as row-scaled log2 CPM for relative differences across samples. Several F. nucleatum genes, including fap2, fomA, and ahpC, show higher representation in a subset of CRC samples.
+
+```{r, fig.width=8, fig.height=4}
+p_volcano_healthy | p_volcano_paired
+```
+
+**Figure 8.** Differential abundance analysis of bacterial genes between CRC and control tissues.
+
+Volcano plots show log2 fold change versus adjusted significance for genes quantified from the targeted B. fragilis + F. nucleatum alignment. The left panel compares CRC vs healthy tissue, and the right compares CRC vs paired normal tissue. Several known F. nucleatum virulence- and stress-associated genes, including [fap2](https://pmc.ncbi.nlm.nih.gov/articles/PMC5465824/), fomA, and ahpC (oxidative stress response gene), are enriched in CRC samples across both contrasts.
+
+Although this targeted two-reference analysis is inherently limited in taxonomic breadth, the statistically significant (padj < 0.05) differential abundance patterns remain biologically plausible and align with the community composition results showing CRC-associated Fusobacterium enrichment. In particular, increased representation of adhesion- and outer membrane-associated genes such as fap2 and fomA in CRC samples is consistent with prior literature linking F. nucleatum to tumor mucosal colonization. ([Abed, 2016](https://pmc.ncbi.nlm.nih.gov/articles/PMC5465824)) However, because these counts likely reflect a combination of species abundance and transcriptional activity, these findings should be interpreted as exploratory abundance-activity shifts.
+
+# 3. Taxonomic abundance analysis
+
+## 3.1 Taxonomic profiling with Kraken2 (script: 04_kraken2.sh)
+
+Kraken2 was run on the raw unmapped reads with `--confidence 0.05`, as recommended by Pereira-Marques et al. for low-biomass samples. Kraken2 classifies reads by breaking them into k-mers and querying each k-mer against a hash table built from the reference database. Each read is assigned to the lowest common ancestor (LCA) of all database taxa that share its k-mers. The --confidence 0.05 threshold requires that at least 5% of a read's k-mers be associated with the assigned taxon or its descendants, reducing spurious classifications, which is a setting recommended by Pereira-Marques et al. for low-biomass samples. Paired-end reads were classified jointly with --paired, so both mates contribute k-mer evidence to a single classification decision per fragment. 
+SLURM array: 119 tasks, 8 CPUs, 100 GB RAM, 24 h.
+
+```bash
+kraken2 \
+    --db /scratch/st-ctropini-1/ahong/kraken2_standard_db \
+    --threads 8 --paired --confidence 0.05 \
+    --report output/kraken2_conf0.05/{sample}.report \
+    --output /dev/null \
+    input/{sample}_unmapped_R1.fq input/{sample}_unmapped_R2.fq
+```
+
+Output: `no_kneaddata/community_composition/kraken2/{sample}.report`, `kneaddata/community_composition/kraken2/{sample}.report`
+
+## 3.2 Abundance estimation with Bracken (script: 05_bracken.sh)
+
+Bracken redistributes reads assigned to higher taxonomic levels back to species. It was applied to each Kraken2 report to produce refined species-level abundance estimates. Where Kraken2 assigns reads to the most specific node it can confidently classify (often at genus level or higher) many reads land at non-species taxonomic levels due to shared k-mers across related organisms. Bracken uses precomputed k-mer distribution files (built from the same database at the specified read length, -r 150) to probabilistically redistribute those higher-level reads down to species (-l S), proportional to  how much unique sequence each candidate species contributes at that read length. This yields corrected species-level read counts without discarding the ambiguously classified reads. Each sample produces two output files: a .bracken table of species-level estimated counts, and a _bracken.report in Kraken2 report format with redistributed counts — will be explained later, but the latter is used in subsequent normalization and as the taxonomic pre-screen for HUMAnN3.
+
+SLURM array: 119 tasks, 4 CPUs, 16 GB RAM, 4 h.
+
+```bash
+bracken \
+    -d /scratch/st-ctropini-1/ahong/kraken2_standard_db \
+    -i output/kraken2_conf0.05/{sample}.report \
+    -o output/bracken_conf0.05/{sample}.bracken \
+    -w output/bracken_conf0.05/{sample}_bracken.report \
+    -r 150 -l S
+```
+
+Output: `no_kneaddata/community_composition/bracken/`, `kneaddata/community_composition/bracken/`
+
+## 3.3 Check Kraken2/Bracken output 
+
+I wanted to the proportion of the total reads were mapped using Kraken2 and Bracken.
+This is for data that was 
+
+```{r}
+t_kraken <- kraken_pct %>%                                                                                       
+    summarise(n = n(), mean = mean(pct_classified, na.rm = TRUE),                                                  
+      sd = sd(pct_classified, na.rm = TRUE), median = median(pct_classified, na.rm = TRUE),                        
+      min = min(pct_classified, na.rm = TRUE), max = max(pct_classified, na.rm = TRUE)) 
+
+t_bracken <- bracken_pct %>%                                                                                     
+    summarise(n = n(), mean = mean(pct_assigned, na.rm = TRUE),                                                    
+      sd = sd(pct_assigned, na.rm = TRUE), median = median(pct_assigned, na.rm = TRUE),                            
+      min = min(pct_assigned, na.rm = TRUE), max = max(pct_assigned, na.rm = TRUE))  
+
+t_summary <- bind_rows(Kraken2 = t_kraken, Bracken = t_bracken, .id = "Method")
+
+knitr::kable(t_summary, digits = 2, caption = "Summary of taxonomic assignment rates")
+```
+
+## 3.4 Normalize Bracken counts (script: 07_normalize_bracken.py)
+
+Species-level counts were normalized following Kvich et al.:
+
+1. Read counts per sample from raw R1 FASTQ (`wc -l / 4`)
+2. Scaling factor = `min_reads_across_samples / reads_in_sample`
+3. Scaled counts = Bracken `new_est_reads` x scaling factor
+4. Taxa with `log10(scaled_count + 1) < 0.9` in all samples removed 
+
+```bash
+python scripts/no_kneaddata/07_normalize_bracken.py
+```
+
+Output in `no_kneaddata/community_composition/normalized/`: `counts_unscaled.tsv`, `counts_scaled.tsv`, `counts_filtered.tsv`, `scaling_factors.tsv`.
+
+## 3.5 Community composition analysis and results
+
+### 3.5.1. Recreating figures from Kvich et al.
+
+#### Figure 4 recreation - Community composition by sample group
+
+Abundance data from Kraken2/Bracken was used to plot Figure 9 (Figure 2J in paper), and Figure 10 (Also Figure 4 in paper).
+
+```{r fig4-raw, include = FALSE}
+# Decided not to show the raw data (no Knead Data) plot)
+# fig.width=8, fig.height=5
+
+# # p_fig4_raw and p_fig4_kd computed in r/CommunityComp.R
+# # Uses: total_df, shannon_df, fuso_phylum_df, rel_long, stats_raw (no_kneaddata)
+# p_fig4_raw
+```
+
+```{r fig4-kd, fig.width=8, fig.height=5}
+# Uses: total_df_kd, shannon_df_kd, fuso_phylum_df_kd, rel_long_kd, stats_kd (KneadData)
+p_fig4_kd
+```
+
+*Figure 9.**  Community composition metrics across sample groups, after KneadData preprocessing.
+
+(A) total bacterial scaled counts per sample, representing overall bacterial abundance. (B) shows within-sample alpha diversity measured by the Shannon index, where higher values indicate greater species richness and evenness. (C) shows total scaled counts assigned to the Fusobacterium genus. (D) shows relative abundance of B. fragilis and F. nucleatum within each sample.
+
+The overall patterns shown here are consistent with the authors' analysis, indicating that KneadData preprocessing did not substantially alter the major community composition trends. Compared to that reported, the distributions become statistically tighter after preprocessing, likely reflecting the removal of uniformly low-depth and lower-quality libraries across all sample groups rather than selective loss from any one condition. This reduction in extreme low-count outliers modestly improves within-group consistency and makes the CRC-associated enrichment trends slightly clearer, while preserving the same scaled count relationships observed in the raw-read analysis.
+
+#### Figure 2J recreation - Virulence gene expression vs F. nucleatum abundance
+
+The goal of recreating Figure 2J was to validate that the reproduced workflow captured the published relationship between F. nucleatum abundance and expression of the virulence-associated genes fomA and radD. This serves as a gene-level reproduction check that links species abundance estimates from Bracken with featureCounts-derived expression values from the same samples.
+
+```{r fig2j, fig.width=7, fig.height=3}
+# p_fig2j computed in r/CommunityComp.R
+# Uses: vir_counts (featureCounts scaled by sf_df), fnuc_abund (Bracken counts_scaled)
+p_fig2j
+```
+
+**Figure 10.** fomA and radD vs F. nucleatum abundance. 
+
+Both fomA and radD expression increased in samples with high F. nucleatum abundance, with a small number of CRC samples driving most of the signal. This is similar to the original Figure 2J.
+
+# 4. Functional activity analysis with HUMANn3
+
+While the original study focused on targeted alignment to B. fragilis and F. nucleatum, this approach leaves out broader community-level functional activity across the biopsy microbiome.Importantly, because this dataset contains metatranscriptomic reads without matched metagenomic sequencing, the resulting pathway abundance estimates likely reflect a combination of underlying microbial abundance and transcriptional activity. However, it's important to note that pathways enriched in CRC samples may arise because the organisms encoding those pathways are more abundant, because those pathways are more actively transcribed, or both. While this prevents strict interpretation as pure transcriptional regulation, it still provides a biologically meaningful view of which microbial functions are more strongly represented across disease states, making it well suited for identifying CRC-associated pathway differences at the community level.
+
+## 4.1 Convert Bracken report to MetaPhlAn3 format (script: 06_bracken_to_mpa.py)
+
+HUMANn3's `--taxonomic-profile` argument accepts a MetaPhlAn3-format profile to bypass its internal MetaPhlAn step. Following the benchmarking recommendations of Pereira-Marques et al., the existing Kraken2/Bracken species profiles generated earlier in this workflow were used as the taxonomic pre-screen in place of HUMANn3’s default MetaPhlAn step, leveraging the higher recall of k-mer–based classification in low-biomass host-dominated samples. 
+
+The KrakenTools `kreport2mpa.py` script was not used due to compatibility issues. Instead a custom script was written with the help of Claude Code to convert the bracken identified speicies to a compatible file for HUMANn3. It reads the Bracken-corrected `_bracken.report` and emits only the 7 standard NCBI ranks (Domain to Species) using MetaPhlAn3 prefix notation (`k__|p__|c__|o__|f__|g__|s__`). Species absent from ChocoPhlAn fall back to the UniRef90 translated search; they still contribute to pathway/gene-family tables but without nucleotide-level hits.
+
+```bash
+python scripts/kneaddata/06_bracken_to_mpa.py \
+    kneaddata/community_composition/bracken/{sample}_bracken.report \
+    kneaddata/functional_profiling/humann3_mpa/{sample}.mpa
+```
+
+Output: `kneaddata/functional_profiling/humann3_merged/` (merged HUMANn3 tables; individual `.mpa` files not retained locally).
+
+## 4.2 Run HUMANn3 (script: 08_humann3.sh for each track)
+
+For each sample:
+1. convert Bracken report to MetaPhlAn3 format (as in section 3.1 above)
+2. concatenate R1 + R2  (HUMANn3 treats reads independently so concatenation loses no information, and the concatenated file is named `{sample}_cat.fq`, hence all HUMANn3 outputs contain `_cat_`) 
+3. run HUMANn3 (uses the taxonomic profile to guide tiered functional profiling) 
+
+Jobs were parallelized on the Sockeye HPC cluster with one job per sample.
+
+```bash
+cat {R1} {R2} > output/humann3_reads/{sample}_cat.fq
+
+humann \
+    --input output/humann3_reads/{sample}_cat.fq \
+    --taxonomic-profile output/humann3_mpa/{sample}.mpa \
+    --output output/humann3/{sample} \
+    --threads 16 \
+    --nucleotide-database /home/alicesh/project/ahong/databases/humann_databases/chocophlan \
+    --protein-database /home/alicesh/project/ahong/databases/humann_databases/uniref \
+    --memory-use maximum
+
+rm -f output/humann3_reads/{sample}_cat.fq
+```
+
+Output per sample: 
+1. `{sample}_cat_genefamilies.tsv` (UniRef90 gene families, RPK)
+2. `{sample}_cat_pathabundance.tsv` (MetaCyc pathway abundances, RPK)
+3. `{sample}_cat_pathcoverage.tsv` (MetaCyc pathway coverage, 0--1)
+
+## 4.3 HUMANn3 post-processing
+
+Once all samples were complete, per-sample tables are merged, normalized to copies per million (CPM), and split into stratified and unstratified components using the following HUMANn3 built-in commands. This step converts per-sample HUMANn3 outputs into cohort-level comparable matrices suitable for downstream analysis.
+
+```bash
+humann_join_tables \
+    -i output/humann3 \
+    --file_name _cat_genefamilies \
+    --search-subdirectories \
+    -o output/humann3_merged/all_genefamilies.tsv
+
+humann_join_tables \
+    -i output/humann3 \
+    --file_name _cat_pathabundance \
+    --search-subdirectories \
+    -o output/humann3_merged/all_pathabundance.tsv
+    
+humann_join_tables \
+    -i output/humann3 \
+    --file_name _cat_pathcoverage \
+    --search-subdirectories \
+    -o output/humann3_merged/all_pathcoverage.tsv
+```
+
+## 4.4. Community-wide functional profiling analysis and results
+
+HUMANn3 pathway abundance tables were first merged, CPM-normalized, and filtered to retain pathways detected in multiple samples. Exploratory ordination using PCoA was then performed to visualize global functional differences across sample groups. Because the dataset includes matched CRC and paired-normal biopsies, MaAsLin2 was subsequently used for paired differential pathway abundance testing.
+
+```{r pcoa, fig.width=5, fig.height=4}
+# PCoA computed in r/LoadHumann3.R (sourced via AnalyzeMaAsLin.R)
+# Uses: pcoa$points, pct_var, meta_h3
+data.frame(sample = rownames(pcoa$points),
+           PC1 = pcoa$points[, 1],
+           PC2 = pcoa$points[, 2]) %>%
+  left_join(meta_h3, by = "sample") %>%
+  ggplot(aes(PC1, PC2, colour = type)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  stat_ellipse(level = 0.75, linetype = "dashed") +
+  scale_colour_manual(values = type_colors, name = NULL) +
+  labs(x = paste0("PC1 (", pct_var[1], "%)"),
+       y = paste0("PC2 (", pct_var[2], "%)")) +
+  theme_classic() + text_size
+```
+
+**Figure 11.** PCoA of community-wide MetaCyc pathway profiles from HUMANn3
+
+Principal coordinates analysis of CPM-normalized pathway abundances across CRC, paired normal, and healthy biopsy samples. Samples form a continuous arc-like gradient rather than distinct disease-specific clusters. This probably suggests that the dominant axis of functional variation reflects differences in microbial biomass and pathway detection sensitivity across low-biomass tissue samples rather than discrete CRC-associated functional states.
+
+### 4.4.1. Differential pathway abundance analysis with MaAsLin2
+
+To better suit the paired design, differential pathway abundance was modeled using [MaAsLin2](https://huttenhower.sph.harvard.edu/maaslin2/), which fits a separate multivariable linear model for each HUMANn3 pathway feature. This serves as a differential abundance analysis analogous to differential expression testing, but applied to CPM-normalized microbial pathway abundances rather than raw RNA-seq gene counts. This framework is meant to explicitly account for the matched sampling structure by including patient ID as a random effect, allowing detection of pathway shifts that are consistently associated with CRC within paired tumor–adjacent normal biopsies. Three biologically relevant contrasts were evaluated separately: CRC vs paired normal (primary within-patient comparison), CRC vs healthy, and CRC vs all non-CRC samples combined. Results are shown for CRC vs paired data was analyzed below.
+
+```{r MaAsLin2-res}
+# maaslin_table computed in r/AnalyzeMaAsLin.R from res_cp (CRC vs Paired)
+knitr::kable(maaslin_table,
+             caption = "Top 10 CRC-associated pathways from paired MaAsLin2 differential pathway abundance analysis.",
+             booktabs = TRUE)
+```
+
+This paired MaAsLin2 analysis reveals CRC-associated functional pathway shifts that were not as clear in the earlier global community-level comparisons (excluded from report due to page limit, but in .rmd). By modeling patient ID as a random effect, the analysis accounts for baseline differences between individuals and instead focuses on consistent within-patient changes between CRC and paired adjacent normal biopsies. 
+
+In the table of the 10 differentially abundant pathways, the coefficient represents the direction and magnitude of pathway enrichment in CRC relative to the paired normal sample, with positive values indicating higher pathway abundance in CRC tissue. The p-value reflects the raw significance of each pathway-level association, while the q-value is the false discovery rate (FDR) adjusted p-value that corrects for testing many pathways simultaneously. Here, the top pathways all showed positive coefficients (~1.13–1.61) with raw p-values < 0.05 and q-values around 0.1.
+
+Next, the top 6 CRC-associated pathways from MaAsLin2 were visualized as paired slope plots to directly show the within-patient trajectory of pathway abundance from paired normal to CRC tissue. Where each line represents one patient-matched biopsy pair connecting the adjacent normal sample (left) to the CRC sample (right). Figure 12 shows that the majority of patient pairs trend upward from paired normal to CRC across all top-ranked pathways, suggesting that these pathways are enriched within tumor-associated microbial samples. While some pathways are driven by a subset of stronger responders, the consistent upward direction across multiple patients strengthens the biological interpretation of CRC-associated pathway activation. Notably, pathways involved in amino acid biosynthesis and degradation, cobalamin salvage, GDP-mannose biosynthesis, glycogen metabolism, and rhamnose biosynthesis emerged among the strongest paired CRC-associated signals, suggesting coordinated metabolic remodeling in the CRC-associated microbial community.
+
+```{r slopeplot, fig.width=6.5, fig.height=4}
+# p_slope computed in r/AnalyzeMaAsLin.R
+# Uses: path_long (LoadHumann3.R), feat/feature_map (RunMaAsLin.R), res_cp (MaAsLin2 output)
+p_slope
+```
+
+**Figure 12.** Paired slope plot of the top 6 CRC-associated pathways from MaAsLin2
+
+# Conclusion
+
+This re-analysis set out to determine whether a more standard low-biomass metatranscriptomic workflow, as described by Pereira-Marques et al. could recover additional microbial insight from the Kvich et al. colorectal cancer biopsy dataset beyond the original two-reference genome alignment strategy. Reproducing the published microbial analyses on the raw unmapped reads successfully recapitulated the key reported findings, including enrichment of Fusobacterium (specifically F. nucleatum) in CRC samples, and increased expression of the virulence-associated genes fomA and radD in high F. nucleatum samples. Importantly, the first part of this analysis showed that applying an additional round of KneadData preprocessing did not substantially alter these major community composition patterns. Instead, it primarily removed the lowest-depth outlier libraries, making overall bacterial scaled counts more consistent across sample groups while preserving the same CRC-associated enrichment trends. Alpha diversity differences became slightly more pronounced after the extra preprocessing.
+
+Extending the workflow through Kraken2/Bracken, HUMANn3, and paired MaAsLin2 modeling revealed additional CRC-associated functional pathway shifts that were not accessible through the original targeted reference approach. Notably, the top differentially abundant pathways remained significant at q-values below 0.15, which is well within the commonly used [MaAsLin2 default exploratory threshold of q < 0.25](https://forum.biobakery.org/t/q-value-threshold-for-significance/4520),making these findings noteworthy despite the challenges of a low-biomass biopsy setting. Many of the strongest signals involved amino acid biosynthesis and degradation, which is could support existing studies reporting enrichment of microbial amino acid metabolism in CRC and pre-surgical tumor-associated microbiomes, including [Ramzy et al.'s](https://pubmed.ncbi.nlm.nih.gov/40314699/) study from 2025, who found enrichment of amino acid metabolism from CRC. These results suggest that broader functional profiling could potentially uncover biologically meaningful CRC-associated microbial activity even when taxonomic signals remain subtle. 
+
+At the same time, this workflow highlights an important tradeoff. While pathway-level differential abundance is powerful for discovery-oriented analyses, it does not directly resolve which specific microbial species are driving each signal. If the biological question is instead focused specifically on B. fragilis or F. nucleatum behavior in CRC, then the original targeted reference-based strategy remains reasonable, provided that mapping rates and species abundance estimates are interpreted cautiously. Ideally, the strongest version of this study would also include matched metagenomic sequencing, enabling assembly of sample-specific MAGs or a cohort pangenome reference for transcript mapping. This would improve strain-level confidence, reduce reference bias, and provide much stronger resolution into which microbial taxa are responsible for the observed CRC-associated functional shifts.
+
+These findings also reinforce the need to interpret metatranscriptomic results from low-biomass biopsy samples cautiously, particularly when the underlying microbial signal is sparse and highly sensitive to preprocessing, reference choice, and sequencing depth. In a parallel exploratory analysis not included in this submission, I also processed the same samples using SAMSA2 instead of the authors’ bwa-mem alignment workflow, specifically mapping back to the B. fragilis genome to investigate mechanisms this CRC-enriched bacterium may be experiencing at the tumor site. Interestingly, the most significantly differentially expressed genes identified by DESeq2 were part of an operon previously suggested to encode CRC-associated virulence factors. Although this secondary analysis is not sufficiently robust to draw strong conclusions, the result is biologically plausible and highlights how alternative processing workflows may generate complementary mechanistic hypotheses. This supports the idea that while targeted reference-based approaches may be limited in breadth, they can still be valuable for hypothesis generation around specific taxa of interest, particularly when paired with orthogonal validation in future studies. (If you're interested, those results are in `/Users/alicehong/kvich_meta/results_from_old_analysis/Bfrag_Unmapped_RNAseq_Analysis.pdf`.)
+
+# References
+
+References are hyperlinked throughout the document. Below is the full list.
+
+1. Pereira-Marques J et al. (2024). Metatranscriptomic profiling of low-biomass samples: implications for the study of host-microbiome interactions. *PMC*. https://pmc.ncbi.nlm.nih.gov/articles/PMC10913719/
+2. Franzosa EA et al. (2018). Species-level functional profiling of metagenomes and metatranscriptomes. *Nature Methods*. https://pmc.ncbi.nlm.nih.gov/articles/PMC8096432/
+3. Kvich L et al. (2024). Biofilms and core pathogens shape the tumor microenvironment and immune phenotype in colorectal cancer. *Gut Microbes*. https://www.tandfonline.com/doi/full/10.1080/19490976.2024.2350156#abstract
+4. Kneaddata.
+5.Wood et al. (2019). Improved metagenomic analysis with Kraken 2. *Genome Biology*.
+https://pubmed.ncbi.nlm.nih.gov/31779668/
+6. Huttenhower lab. Knead data. available from: https://huttenhower.sph.harvard.edu/kneaddata/
+7. Li et al. (2013). Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM.*[q-bio.GN]* https://arxiv.org/abs/1303.3997
+8. Heng et al. (2009). The Sequence Alignment/Map format and SAMtools. *Bioinformatics* https://academic.oup.com/bioinformatics/article/25/16/2078/204688
+9. Yang et al. (2014) featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. *Bioinformatics*. https://academic.oup.com/bioinformatics/article/30/7/923/232889
+10. Love et al. (2014). Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. *Genome Biology*. https://pubmed.ncbi.nlm.nih.gov/25516281/
+11. Andrews S. (2010). FastQC: a quality control tool for high throughput sequence data. Available online at: http://www.bioinformatics.babraham.ac.uk/projects/fastqc
+12. Bolger et al. (2014). Trimmomatic: a flexible trimmer for Illumina sequence data. *Bioinformatics* https://doi.org/10.1093/bioinformatics/btu170
+13. Ewels et al. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. *Bioinformatics*. https://academic.oup.com/bioinformatics/article/32/19/3047/2196507
+14. Langemead and Salzberg. (2013). Fast gapped-read alignment with Bowtie 2. *Nat Methods*. https://pmc.ncbi.nlm.nih.gov/articles/PMC3322381/
+15. Westreich et al. (2018). SAMSA2: a standalone metatranscriptome analysis pipeline. *BMC Bioinformatics*. https://pmc.ncbi.nlm.nih.gov/articles/PMC5963165/
+16. Buchfink et al. (2015). Fast and sensitive protein alignment using DIAMOND. *Nat Methods*. https://www.nature.com/articles/nmeth.3176
+17. Mallick et al. (2021). Multivariable association discovery in population-scale meta-omics studies. *PLOS Comp Bio*. https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442
+18. Biobakery forum: [https://forum.biobakery.org/t/q-value-threshold-for-significance/4520](https://forum.biobakery.org/t/q-value-threshold-for-significance/4520)
+19. Ramzy et al. (2025). Metabolomic analysis reveals key changes in amino acid metabolism in colorectal cancer patients. *Amino Acids*. https://pubmed.ncbi.nlm.nih.gov/40314699/
+20. Abed et al. (2016). Fap2 Mediates Fusobacterium nucleatum Colorectal Adenocarcinoma Enrichment by Binding to Tumor-Expressed Gal-GalNAc. *Cell Host Microbe*. https://pmc.ncbi.nlm.nih.gov/articles/PMC5465824/
+
+AI acknowledgement:  
+Anthropic. (2024). Claude 3.5 Sonnet [Large language model]. Retrieved from https://claude.ai.    
+
+scripts created partially or wholly using Cluade 3.5 has the line:    
+`Credit: This file was partially generated using using Claude 3.5 Sonnet by Anthropic - AH`
+
+Claude Code was also used to ask questions in both remote and local directories, to troubleshoot and run scripts, solve git issues, and answer questions related to the tasks for the project.

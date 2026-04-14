@@ -88,6 +88,11 @@ k__Bacteria|p__...  1|2           72.1
 - Emits only the 7 standard NCBI ranks: D→`k__`, P→`p__`, C→`c__`, O→`o__`, F→`f__`, G→`g__`, S→`s__`. Intermediate ranks are skipped.
 - Passed to HUMANn3 via `--taxonomic-profile` to skip internal MetaPhlAn and use Bracken-derived taxonomy.
 
+
+### humann3_merged & humann3_merged_all
+
+- joined tables from humann3 outputs across all samples. all includes all samples, the other excludes samples below 100k reads
+
 ### qc
 
 **Source:** bfrag4 `output/qc/`  
